@@ -1,4 +1,4 @@
-module algorithms
+module github.com/deweppro/algorithms
 
 go 1.13
 
