@@ -4,8 +4,6 @@ Algorithmic calculation methods
 
 ### 1) Topological sorting. Kahn's Algorithm.
 
-graph/kahn/type.go:2
-
 ```go
 import (
     graphkahn "https://github.com/deweppro/algorithms/graph/kahn"
