@@ -41,14 +41,12 @@ func Benchmark_Kahn(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		func() {
 			kahn := New()
-
-			kahn.Add("1", "2")
-			kahn.Add("1", "3")
-			kahn.Add("3", "4")
-			kahn.Add("2", "4")
-			kahn.Add("4", "5")
-
-			kahn.Build()
+			_ = kahn.Add("1", "2")
+			_ = kahn.Add("1", "3")
+			_ = kahn.Add("3", "4")
+			_ = kahn.Add("2", "4")
+			_ = kahn.Add("4", "5")
+			_ = kahn.Build()
 		}()
 	}
 }
