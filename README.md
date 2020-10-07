@@ -9,19 +9,19 @@ Algorithmic calculation methods
 
 ```go
 import (
-    graphkahn "https://github.com/deweppro/go-algorithms/graph/kahn"
+    "https://github.com/deweppro/go-algorithms/graph/kahn"
  )
 
-kahn := graphkahn.New()
+graph := kahn.New()
 
-kahn.Add("1", "2")
-kahn.Add("1", "3")
-kahn.Add("3", "4")
-kahn.Add("2", "4")
-kahn.Add("4", "5")
+graph.Add("1", "2")
+graph.Add("1", "3")
+graph.Add("3", "4")
+graph.Add("2", "4")
+graph.Add("4", "5")
 
-kahn.Build()
-result := kahn.Result()
+graph.Build()
+result := graph.Result()
 ```
 
 **Result:** [1,2,3,4,5]

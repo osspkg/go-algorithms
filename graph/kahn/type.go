@@ -24,14 +24,14 @@ var (
 	ErrBuildKahn = errors.New("can't do topographical sorting")
 )
 
-type Kahn struct {
+type Graph struct {
 	graph  map[string]map[string]int
 	tmp    map[string]bool
 	result []string
 }
 
-func New() *Kahn {
-	return &Kahn{
+func New() *Graph {
+	return &Graph{
 		graph:  make(map[string]map[string]int),
 		tmp:    make(map[string]bool),
 		result: make([]string, 0),
@@ -39,7 +39,7 @@ func New() *Kahn {
 }
 
 // Add - Adding a graph edge
-func (k *Kahn) Add(from, to string) error {
+func (k *Graph) Add(from, to string) error {
 	if _, ok := k.graph[from]; !ok {
 		k.graph[from] = make(map[string]int)
 	}
@@ -48,9 +48,9 @@ func (k *Kahn) Add(from, to string) error {
 }
 
 // To update the temporary map
-func (k *Kahn) updateTemp() int {
+func (k *Graph) updateTemp() int {
 	for i, sub := range k.graph {
-		for j, _ := range sub {
+		for j := range sub {
 			k.tmp[j] = true
 		}
 		k.tmp[i] = true
@@ -59,12 +59,12 @@ func (k *Kahn) updateTemp() int {
 }
 
 // Build - Perform sorting
-func (k *Kahn) Build() error {
+func (k *Graph) Build() error {
 	k.result = k.result[:0]
 	length := k.updateTemp()
 	for len(k.result) < length {
 		found := ""
-		for item, _ := range k.tmp {
+		for item := range k.tmp {
 			if k.find(item) {
 				found = item
 				break
@@ -81,7 +81,7 @@ func (k *Kahn) Build() error {
 }
 
 // Finding the next edge
-func (k *Kahn) find(item string) bool {
+func (k *Graph) find(item string) bool {
 	for i, j := range k.graph {
 		if _, jok := j[item]; jok {
 			if _, iok := k.tmp[i]; iok {
@@ -93,6 +93,6 @@ func (k *Kahn) find(item string) bool {
 }
 
 // Result - Getting a sorted slice
-func (k *Kahn) Result() []string {
+func (k *Graph) Result() []string {
 	return k.result
 }
