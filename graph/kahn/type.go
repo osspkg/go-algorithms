@@ -7,7 +7,7 @@
 
 package kahn
 
-import "github.com/pkg/errors"
+import "github.com/deweppro/go-errors"
 
 var (
 	ErrBuildKahn = errors.New("can't do topographical sorting")
