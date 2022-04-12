@@ -1,7 +1,7 @@
 # Algorithms
 Algorithmic calculation methods
 
-[![Coverage Status](https://coveralls.io/repos/github/deweppro/go-algorithms/badge.svg?branch=codecov)](https://coveralls.io/github/deweppro/go-algorithms?branch=codecov)
+[![Coverage Status](https://coveralls.io/repos/github/deweppro/go-algorithms/badge.svg?branch=master)](https://coveralls.io/github/deweppro/go-algorithms?branch=master)
 [![Release](https://img.shields.io/github/release/deweppro/go-algorithms.svg?style=flat-square)](https://github.com/deweppro/go-algorithms/releases/latest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/deweppro/go-algorithms)](https://goreportcard.com/report/github.com/deweppro/go-algorithms)
 [![Build Status](https://travis-ci.com/deweppro/go-algorithms.svg?branch=master)](https://travis-ci.com/deweppro/go-algorithms)
