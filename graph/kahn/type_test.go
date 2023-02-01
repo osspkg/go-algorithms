@@ -1,9 +1,3 @@
-/*
- * Copyright (c) 2019-2020 Mikhail Knyazhev <markus621@gmail.com>.
- * All rights reserved. Use of this source code is governed by a BSD-style
- * license that can be found in the LICENSE file.
- */
-
 package kahn
 
 import (
@@ -47,12 +41,12 @@ func Benchmark_Kahn(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		func() {
 			graph := New()
-			_ = graph.Add("1", "2")
-			_ = graph.Add("1", "3")
-			_ = graph.Add("3", "4")
-			_ = graph.Add("2", "4")
-			_ = graph.Add("4", "5")
-			_ = graph.Build()
+			_ = graph.Add("1", "2") //nolint:errcheck
+			_ = graph.Add("1", "3") //nolint:errcheck
+			_ = graph.Add("3", "4") //nolint:errcheck
+			_ = graph.Add("2", "4") //nolint:errcheck
+			_ = graph.Add("4", "5") //nolint:errcheck
+			_ = graph.Build()       //nolint:errcheck
 		}()
 	}
 }
