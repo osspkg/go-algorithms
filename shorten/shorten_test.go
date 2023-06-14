@@ -3,7 +3,7 @@ package shorten_test
 import (
 	"testing"
 
-	"github.com/deweppro/go-algorithms/shorten"
+	"github.com/osspkg/go-algorithms/shorten"
 	"github.com/stretchr/testify/require"
 )
 
