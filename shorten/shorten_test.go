@@ -1,3 +1,8 @@
+/*
+ *  Copyright (c) 2019-2023 Mikhail Knyazhev <markus621@yandex.ru>. All rights reserved.
+ *  Use of this source code is governed by a BSD 3-Clause license that can be found in the LICENSE file.
+ */
+
 package shorten_test
 
 import (
@@ -10,7 +15,7 @@ import (
 func TestEncode_EncodeDecode(t *testing.T) {
 	tests := []struct {
 		name string
-		id   int
+		id   uint64
 		want string
 	}{
 		{name: "Case1", id: 1, want: "p"},
