@@ -7,22 +7,25 @@
 
 package kahn
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrBuildKahn = errors.New("can't do topographical sorting")
 )
 
 type Graph struct {
-	graph  map[string]map[string]int
-	tmp    map[string]bool
-	result []string
+	graph      map[string]map[string]int
+	tmp        map[string]struct{}
+	result     []string
+	breakPoint string
 }
 
 func New() *Graph {
 	return &Graph{
 		graph:  make(map[string]map[string]int),
-		tmp:    make(map[string]bool),
+		tmp:    make(map[string]struct{}),
 		result: make([]string, 0),
 	}
 }
@@ -36,13 +39,17 @@ func (k *Graph) Add(from, to string) error {
 	return nil
 }
 
+func (k *Graph) BreakPoint(point string) {
+	k.breakPoint = point
+}
+
 // To update the temporary map
 func (k *Graph) updateTemp() int {
 	for i, sub := range k.graph {
 		for j := range sub {
-			k.tmp[j] = true
+			k.tmp[j] = struct{}{}
 		}
-		k.tmp[i] = true
+		k.tmp[i] = struct{}{}
 	}
 	return len(k.tmp)
 }
@@ -64,6 +71,9 @@ func (k *Graph) Build() error {
 			delete(k.tmp, found)
 		} else {
 			return ErrBuildKahn
+		}
+		if len(k.breakPoint) > 0 && found == k.breakPoint {
+			break
 		}
 	}
 	return nil

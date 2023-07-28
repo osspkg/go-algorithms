@@ -9,37 +9,59 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnit_KahnCoherent(t *testing.T) {
 	graph := New()
 
-	assert.NoError(t, graph.Add("a", "b"))
-	assert.NoError(t, graph.Add("a", "c"))
-	assert.NoError(t, graph.Add("a", "d"))
-	assert.NoError(t, graph.Add("a", "e"))
-	assert.NoError(t, graph.Add("b", "d"))
-	assert.NoError(t, graph.Add("c", "d"))
-	assert.NoError(t, graph.Add("c", "e"))
-	assert.NoError(t, graph.Add("d", "e"))
+	require.NoError(t, graph.Add("a", "b"))
+	require.NoError(t, graph.Add("a", "c"))
+	require.NoError(t, graph.Add("a", "d"))
+	require.NoError(t, graph.Add("a", "e"))
+	require.NoError(t, graph.Add("b", "d"))
+	require.NoError(t, graph.Add("c", "d"))
+	require.NoError(t, graph.Add("c", "e"))
+	require.NoError(t, graph.Add("d", "e"))
 
-	assert.NoError(t, graph.Build())
+	require.NoError(t, graph.Build())
 
 	result := graph.Result()
-	assert.True(t, len(result) > 0)
+	require.True(t, len(result) == 5)
 
-	assert.Contains(t, []string{"a,b,c,d,e", "a,c,b,d,e"}, strings.Join(result, ","))
+	require.Contains(t, []string{"a,b,c,d,e", "a,c,b,d,e"}, strings.Join(result, ","))
+}
+
+func TestUnit_KahnCoherentBreakPoint(t *testing.T) {
+	graph := New()
+
+	require.NoError(t, graph.Add("a", "b"))
+	require.NoError(t, graph.Add("a", "c"))
+	require.NoError(t, graph.Add("a", "d"))
+	require.NoError(t, graph.Add("a", "e"))
+	require.NoError(t, graph.Add("b", "d"))
+	require.NoError(t, graph.Add("c", "d"))
+	require.NoError(t, graph.Add("c", "e"))
+	require.NoError(t, graph.Add("d", "e"))
+
+	graph.BreakPoint("c")
+
+	require.NoError(t, graph.Build())
+
+	result := graph.Result()
+	require.True(t, len(result) <= 3)
+
+	require.Contains(t, []string{"a,b,c", "a,c"}, strings.Join(result, ","))
 }
 
 func TestUnit_KahnCyclical(t *testing.T) {
 	graph := New()
 
-	assert.NoError(t, graph.Add("1", "2"))
-	assert.NoError(t, graph.Add("2", "3"))
-	assert.NoError(t, graph.Add("3", "2"))
+	require.NoError(t, graph.Add("1", "2"))
+	require.NoError(t, graph.Add("2", "3"))
+	require.NoError(t, graph.Add("3", "2"))
 
-	assert.Error(t, graph.Build())
+	require.Error(t, graph.Build())
 }
 
 func Benchmark_Kahn(b *testing.B) {
