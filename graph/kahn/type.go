@@ -9,15 +9,20 @@ package kahn
 
 import (
 	"errors"
+	"fmt"
+	"sort"
 )
 
 var (
-	ErrBuildKahn = errors.New("can't do topographical sorting")
+	ErrBuildKahn      = errors.New("can't do topographical sorting")
+	ErrBreakPointKahn = errors.New("don`t found topographical break point")
 )
+
+const empty = ""
 
 type Graph struct {
 	graph      map[string]map[string]int
-	tmp        map[string]struct{}
+	all        map[string]struct{}
 	result     []string
 	breakPoint string
 }
@@ -25,7 +30,7 @@ type Graph struct {
 func New() *Graph {
 	return &Graph{
 		graph:  make(map[string]map[string]int),
-		tmp:    make(map[string]struct{}),
+		all:    make(map[string]struct{}),
 		result: make([]string, 0),
 	}
 }
@@ -44,31 +49,56 @@ func (k *Graph) BreakPoint(point string) {
 }
 
 // To update the temporary map
-func (k *Graph) updateTemp() int {
+func (k *Graph) updateTemp() (int, []string) {
 	for i, sub := range k.graph {
 		for j := range sub {
-			k.tmp[j] = struct{}{}
+			k.all[j] = struct{}{}
 		}
-		k.tmp[i] = struct{}{}
+		k.all[i] = struct{}{}
 	}
-	return len(k.tmp)
+	temp := make([]string, 0, len(k.all))
+	for s := range k.all {
+		temp = append(temp, s)
+	}
+	sort.Strings(temp)
+	return len(k.all), temp
 }
 
 // Build - Perform sorting
 func (k *Graph) Build() error {
 	k.result = k.result[:0]
-	length := k.updateTemp()
+	length, temp := k.updateTemp()
+
+	if len(k.breakPoint) > 0 {
+		j := -1
+		for i, name := range temp {
+			if k.breakPoint == name {
+				j = i
+			}
+		}
+		if j < 0 {
+			return fmt.Errorf("%w: %s", ErrBreakPointKahn, k.breakPoint)
+		}
+		temp[0], temp[j] = temp[j], temp[0]
+	}
+
 	for len(k.result) < length {
 		found := ""
-		for item := range k.tmp {
+		i := 0
+		for j, item := range temp {
+			if item == empty {
+				continue
+			}
 			if k.find(item) {
 				found = item
+				i = j
 				break
 			}
 		}
 		if len(found) > 0 {
 			k.result = append(k.result, found)
-			delete(k.tmp, found)
+			delete(k.all, found)
+			temp[i] = empty
 		} else {
 			return ErrBuildKahn
 		}
@@ -83,7 +113,7 @@ func (k *Graph) Build() error {
 func (k *Graph) find(item string) bool {
 	for i, j := range k.graph {
 		if _, jok := j[item]; jok {
-			if _, iok := k.tmp[i]; iok {
+			if _, iok := k.all[i]; iok {
 				return false
 			}
 		}
@@ -93,5 +123,5 @@ func (k *Graph) find(item string) bool {
 
 // Result - Getting a sorted slice
 func (k *Graph) Result() []string {
-	return k.result
+	return append(make([]string, 0, len(k.result)), k.result...)
 }
