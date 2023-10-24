@@ -8,8 +8,8 @@ package shorten_test
 import (
 	"testing"
 
-	"github.com/osspkg/go-algorithms/shorten"
 	"github.com/stretchr/testify/require"
+	"go.osspkg.com/algorithms/shorten"
 )
 
 func TestEncode_EncodeDecode(t *testing.T) {
