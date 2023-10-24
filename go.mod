@@ -1,4 +1,4 @@
-module github.com/osspkg/go-algorithms
+module go.osspkg.com/algorithms
 
 go 1.17
 

@@ -10,7 +10,7 @@ Algorithmic calculation methods
 ## Install
 
 ```shell
-go get -u github.com/osspkg/go-algorithms
+go get -u go.osspkg.com/algorithms
 ```
 
 ## List
