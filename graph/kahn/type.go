@@ -36,12 +36,11 @@ func New() *Graph {
 }
 
 // Add - Adding a graph edge
-func (k *Graph) Add(from, to string) error {
+func (k *Graph) Add(from, to string) {
 	if _, ok := k.graph[from]; !ok {
 		k.graph[from] = make(map[string]int)
 	}
 	k.graph[from][to]++
-	return nil
 }
 
 func (k *Graph) BreakPoint(point string) {
