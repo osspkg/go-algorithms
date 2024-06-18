@@ -15,10 +15,17 @@ go get -u go.osspkg.com/algorithms
 
 ## List
 
-- Topological sorting
-  - [Kahn's Algorithm](graph/kahn/)
-- Reducing numbers
-  - [Shorten](shorten/)
+- Graph
+  - Topological sorting
+    - [Kahn's Algorithm](graph/kahn/type.go)
+- Information compression
+  - [Reducing numbers](shorten/shorten.go)
+- Sorting algorithm
+  - [Bubble sort](sorts/bubble.go)
+  - [Cocktail shaker sort](sorts/cocktail.go)
+  - [Insertion sort](sorts/insertion.go)
+  - [Merge sort](sorts/merge.go)
+  - [Selection sort](sorts/selection.go)
 
 ## License
 
