@@ -12,7 +12,7 @@ import (
 	"go.osspkg.com/algorithms/sorts"
 )
 
-func TestUnit_SortSelection(t *testing.T) {
+func TestUnit_SortHeapsort(t *testing.T) {
 	tests := []struct {
 		name string
 		args []int
@@ -35,18 +35,18 @@ func TestUnit_SortSelection(t *testing.T) {
 		},
 		{
 			name: "IntCase4",
-			args: []int{4, 3, 2, 1, 0},
+			args: []int{4, 0, 1, 2, 3},
 			want: []int{0, 1, 2, 3, 4},
 		},
 		{
 			name: "IntCase5",
-			args: []int{3, 2, 1, 0},
+			args: []int{0, 3, 1, 2},
 			want: []int{0, 1, 2, 3},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sorts.Selection(tt.args, func(i, j int) bool {
+			sorts.Heapsort(tt.args, func(i, j int) bool {
 				return tt.args[i] < tt.args[j]
 			})
 			require.Equal(t, tt.want, tt.args)
@@ -54,11 +54,11 @@ func TestUnit_SortSelection(t *testing.T) {
 	}
 }
 
-func Benchmark_SortSelection(b *testing.B) {
+func Benchmark_SortHeapsort(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		arr := []int{45, 61, 87, 20, 65, 36, 25, 86, 64, 4, 36, 53, 17, 38, 48, 52, 53, 59, 80, 79, 95, 72, 85, 52, 9, 12, 9, 36, 47, 34}
-		sorts.Selection(arr, func(i, j int) bool {
+		sorts.Heapsort(arr, func(i, j int) bool {
 			return arr[i] < arr[j]
 		})
 	}

@@ -57,7 +57,7 @@ func TestUnit_SortInsertion(t *testing.T) {
 func Benchmark_SortInsertion(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		arr := []int{30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1}
+		arr := []int{45, 61, 87, 20, 65, 36, 25, 86, 64, 4, 36, 53, 17, 38, 48, 52, 53, 59, 80, 79, 95, 72, 85, 52, 9, 12, 9, 36, 47, 34}
 		sorts.Insertion(arr, func(i, j int) bool {
 			return arr[i] < arr[j]
 		})
