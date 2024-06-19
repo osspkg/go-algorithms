@@ -26,6 +26,9 @@ go get -u go.osspkg.com/algorithms
   - [Insertion sort](sorts/insertion.go)
   - [Merge sort](sorts/merge.go)
   - [Selection sort](sorts/selection.go)
+  - [Heapsort](sorts/heapsort.go)
+- Filtering algorithms
+  - [Bloom filter](filters/bloom/bloom.go)
 
 ## License
 
