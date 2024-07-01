@@ -3,6 +3,9 @@
 install:
 	go install github.com/osspkg/devtool@latest
 
+.PHONY: setup
+setup:
+	devtool setup-lib
 
 .PHONY: lint
 lint:
@@ -12,12 +15,16 @@ lint:
 license:
 	devtool license
 
+.PHONY: build
+build:
+	devtool build --arch=amd64
+
 .PHONY: tests
 tests:
 	devtool test
 
 .PHONY: ci
-ci: install license lint tests
+ci: install setup license lint build tests
 
 .PHONY: go_work
 go_work:

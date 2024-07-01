@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson4086215fDecodeGoOsspkgComGoppyXlog(in *jlexer.Lexer, out *Message) {
+func easyjson4086215fDecodeGoOsspkgComXLogx(in *jlexer.Lexer, out *Message) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -78,7 +78,7 @@ func easyjson4086215fDecodeGoOsspkgComGoppyXlog(in *jlexer.Lexer, out *Message) 
 		in.Consumed()
 	}
 }
-func easyjson4086215fEncodeGoOsspkgComGoppyXlog(out *jwriter.Writer, in Message) {
+func easyjson4086215fEncodeGoOsspkgComXLogx(out *jwriter.Writer, in Message) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -128,23 +128,23 @@ func easyjson4086215fEncodeGoOsspkgComGoppyXlog(out *jwriter.Writer, in Message)
 // MarshalJSON supports json.Marshaler interface
 func (v Message) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson4086215fEncodeGoOsspkgComGoppyXlog(&w, v)
+	easyjson4086215fEncodeGoOsspkgComXLogx(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Message) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson4086215fEncodeGoOsspkgComGoppyXlog(w, v)
+	easyjson4086215fEncodeGoOsspkgComXLogx(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Message) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson4086215fDecodeGoOsspkgComGoppyXlog(&r, v)
+	easyjson4086215fDecodeGoOsspkgComXLogx(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Message) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson4086215fDecodeGoOsspkgComGoppyXlog(l, v)
+	easyjson4086215fDecodeGoOsspkgComXLogx(l, v)
 }
