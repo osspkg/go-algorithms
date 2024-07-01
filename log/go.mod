@@ -9,7 +9,7 @@ replace (
 
 require (
 	github.com/mailru/easyjson v0.7.7
-	go.osspkg.com/x/sync v0.5.0
+	go.osspkg.com/x/sync v0.5.1
 	go.osspkg.com/x/test v0.5.0
 )
 

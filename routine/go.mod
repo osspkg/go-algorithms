@@ -10,6 +10,5 @@ replace (
 
 require (
 	go.osspkg.com/x/errors v0.5.0
-	go.osspkg.com/x/sync v0.5.0
+	go.osspkg.com/x/sync v0.5.1
 )
-
