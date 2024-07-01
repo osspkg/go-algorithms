@@ -3,15 +3,18 @@ go 1.20
 use (
 	.
 	./algorithms
+	./app
 	./config
 	./console
 	./context
 	./domain
+	./encryption
 	./env
 	./errors
 	./graphics
 	./io
 	./log
+	./net
 	./random
 	./routine
 	./sync
