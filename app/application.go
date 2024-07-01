@@ -8,15 +8,15 @@ package app
 import (
 	"go.osspkg.com/x/config"
 	"go.osspkg.com/x/console"
-	"go.osspkg.com/x/context"
 	"go.osspkg.com/x/env"
-	"go.osspkg.com/x/log"
+	"go.osspkg.com/x/logx"
 	"go.osspkg.com/x/syscall"
+	"go.osspkg.com/x/xc"
 )
 
 type (
 	App interface {
-		Logger(log log.Logger) App
+		Logger(log logx.Logger) App
 		Modules(modules ...interface{}) App
 		ConfigResolvers(res ...config.Resolver) App
 		ConfigFile(filename string) App
@@ -36,15 +36,15 @@ type (
 		modules        Modules
 		packages       Container
 		logHandler     *_log
-		log            log.Logger
-		appContext     context.Context
+		log            logx.Logger
+		appContext     xc.Context
 		exitFunc       func(code int)
 	}
 )
 
 // New create application
 func New() App {
-	ctx := context.New()
+	ctx := xc.New()
 	return &_app{
 		resolvers:  make([]config.Resolver, 0, 2),
 		modules:    Modules{},
@@ -56,7 +56,7 @@ func New() App {
 }
 
 // Logger setup logger
-func (a *_app) Logger(l log.Logger) App {
+func (a *_app) Logger(l logx.Logger) App {
 	a.log = l
 	return a
 }
@@ -215,7 +215,7 @@ func (a *_app) prepareConfig(interactive bool) {
 			Format:   "string",
 		})
 		if a.log == nil {
-			a.log = log.Default()
+			a.log = logx.Default()
 		}
 		a.logHandler.Handler(a.log)
 	}
@@ -240,7 +240,7 @@ func (a *_app) prepareConfig(interactive bool) {
 		// init logger
 		a.logHandler = newLog(appConfig.Log)
 		if a.log == nil {
-			a.log = log.Default()
+			a.log = logx.Default()
 		}
 		a.logHandler.Handler(a.log)
 		a.modules = a.modules.Add(
@@ -253,7 +253,7 @@ func (a *_app) prepareConfig(interactive bool) {
 			return resolver.Decode(c)
 		})
 		if err != nil {
-			a.log.WithFields(log.Fields{
+			a.log.WithFields(logx.Fields{
 				"err": err.Error(),
 			}).Fatalf("Decode config file")
 		}
@@ -261,7 +261,7 @@ func (a *_app) prepareConfig(interactive bool) {
 
 		if !interactive && len(a.pidFilePath) > 0 {
 			if err = syscall.Pid(a.pidFilePath); err != nil {
-				a.log.WithFields(log.Fields{
+				a.log.WithFields(logx.Fields{
 					"err":  err.Error(),
 					"file": a.pidFilePath,
 				}).Fatalf("Create pid file")
@@ -269,8 +269,8 @@ func (a *_app) prepareConfig(interactive bool) {
 		}
 	}
 	a.modules = a.modules.Add(
-		func() log.Logger { return a.log },
-		func() context.Context { return a.appContext },
+		func() logx.Logger { return a.log },
+		func() xc.Context { return a.appContext },
 	)
 }
 
@@ -287,7 +287,7 @@ func (a *_app) steps(up []step, wait func(bool), down []step) bool {
 			a.log.Infof(s.Message)
 		}
 		if err := s.Call(); err != nil {
-			a.log.WithFields(log.Fields{
+			a.log.WithFields(logx.Fields{
 				"err": err.Error(),
 			}).Errorf(s.Message)
 			erc++
@@ -302,7 +302,7 @@ func (a *_app) steps(up []step, wait func(bool), down []step) bool {
 			a.log.Infof(s.Message)
 		}
 		if err := s.Call(); err != nil {
-			a.log.WithFields(log.Fields{
+			a.log.WithFields(logx.Fields{
 				"err": err.Error(),
 			}).Errorf(s.Message)
 			erc++

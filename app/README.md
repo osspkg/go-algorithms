@@ -27,8 +27,8 @@ import (
 	"fmt"
 
 	"go.osspkg.com/x/app"
-	"go.osspkg.com/x/log"
-	xc "go.osspkg.com/x/context"
+	"go.osspkg.com/x/logx"
+	"go.osspkg.com/x/xc"
 )
 
 type (
@@ -60,7 +60,7 @@ func (s *Simple) Down(_ xc.Context) error {
 
 func main() {
 	app.New().
-		Logger(log.Default()).
+		Logger(logx.Default()).
 		ConfigFile(
 			"./config.yaml",
 			Config{},
@@ -91,7 +91,7 @@ app.New()
 
 ```go
 type Simple1 struct{}
-func NewSimple1(_ *log.Logger) *Simple1 { return &Simple1{} }
+func NewSimple1(_ *logx.Logger) *Simple1 { return &Simple1{} }
 ```
 
 *Returns the interface*

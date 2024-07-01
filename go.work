@@ -6,19 +6,19 @@ use (
 	./app
 	./config
 	./console
-	./context
 	./domain
-	./encryption
+	./encrypt
 	./env
 	./errors
 	./graphics
-	./io
-	./log
-	./net
+	./ioutils
+	./logx
+	./network
 	./random
 	./routine
-	./sync
+	./syncing
 	./syscall
 	./test
 	./version
+	./xc
 )

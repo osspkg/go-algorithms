@@ -8,9 +8,9 @@ package app
 import (
 	"context"
 
-	xc "go.osspkg.com/x/context"
 	"go.osspkg.com/x/errors"
-	"go.osspkg.com/x/sync"
+	"go.osspkg.com/x/syncing"
+	"go.osspkg.com/x/xc"
 )
 
 type (
@@ -77,7 +77,7 @@ type (
 	}
 	serviceTree struct {
 		tree   *treeItem
-		status sync.Switch
+		status syncing.Switch
 		ctx    xc.Context
 	}
 )
@@ -86,7 +86,7 @@ func newServiceTree(ctx xc.Context) *serviceTree {
 	return &serviceTree{
 		tree:   nil,
 		ctx:    ctx,
-		status: sync.NewSwitch(),
+		status: syncing.NewSwitch(),
 	}
 }
 

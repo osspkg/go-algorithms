@@ -8,12 +8,12 @@ package app
 import (
 	"os"
 
-	"go.osspkg.com/x/log"
+	"go.osspkg.com/x/logx"
 )
 
 type _log struct {
 	file    *os.File
-	handler log.Logger
+	handler logx.Logger
 	conf    LogConfig
 }
 
@@ -25,15 +25,15 @@ func newLog(conf LogConfig) *_log {
 	return &_log{file: file, conf: conf}
 }
 
-func (v *_log) Handler(l log.Logger) {
+func (v *_log) Handler(l logx.Logger) {
 	v.handler = l
 	v.handler.SetOutput(v.file)
 	v.handler.SetLevel(v.conf.Level)
 	switch v.conf.Format {
 	case "string":
-		v.handler.SetFormatter(log.NewFormatString())
+		v.handler.SetFormatter(logx.NewFormatString())
 	case "json":
-		v.handler.SetFormatter(log.NewFormatJSON())
+		v.handler.SetFormatter(logx.NewFormatJSON())
 	}
 }
 

@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"go.osspkg.com/x/app"
-	xc "go.osspkg.com/x/context"
 	"go.osspkg.com/x/errors"
 	"go.osspkg.com/x/test"
+	"go.osspkg.com/x/xc"
 )
 
 func TestUnit_EmptyDI(t *testing.T) {

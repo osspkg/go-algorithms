@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"go.osspkg.com/x/errors"
-	"go.osspkg.com/x/sync"
+	"go.osspkg.com/x/syncing"
 )
 
 func Interval(ctx context.Context, interval time.Duration, call func(context.Context)) {
@@ -57,7 +57,7 @@ func Repeat(ctx context.Context, call func()) {
 }
 
 func Parallel(calls ...func()) {
-	wg := sync.NewGroup()
+	wg := syncing.NewGroup()
 	for _, call := range calls {
 		call := call
 		wg.Background(func() {

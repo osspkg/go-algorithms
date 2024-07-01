@@ -10,9 +10,9 @@ import (
 	"reflect"
 
 	"go.osspkg.com/x/algorithms/graph/kahn"
-	"go.osspkg.com/x/context"
 	"go.osspkg.com/x/errors"
-	"go.osspkg.com/x/sync"
+	"go.osspkg.com/x/syncing"
+	"go.osspkg.com/x/xc"
 )
 
 type (
@@ -20,7 +20,7 @@ type (
 		kahn   *kahn.Graph
 		srv    *serviceTree
 		store  *objectStorage
-		status sync.Switch
+		status syncing.Switch
 	}
 
 	Container interface {
@@ -32,12 +32,12 @@ type (
 	}
 )
 
-func NewContainer(ctx context.Context) Container {
+func NewContainer(ctx xc.Context) Container {
 	return &container{
 		kahn:   kahn.New(),
 		srv:    newServiceTree(ctx),
 		store:  newObjectStorage(),
-		status: sync.NewSwitch(),
+		status: syncing.NewSwitch(),
 	}
 }
 
