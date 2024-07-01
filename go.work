@@ -1,0 +1,17 @@
+go 1.20
+
+use (
+	.
+	./algorithms
+	./config
+	./console
+	./domain
+	./env
+	./errors
+	./io
+	./random
+	./sync
+	./syscall
+	./test
+	./version
+)
