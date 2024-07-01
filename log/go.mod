@@ -1,16 +1,16 @@
-module go.osspkg.com/x/io
+module go.osspkg.com/x/log
 
 go 1.20
 
 replace (
-	go.osspkg.com/x/errors => ../errors
 	go.osspkg.com/x/sync => ../sync
 	go.osspkg.com/x/test => ../test
 )
 
 require (
-	go.osspkg.com/x/errors v0.5.0
+	github.com/mailru/easyjson v0.7.7
 	go.osspkg.com/x/sync v0.5.0
 	go.osspkg.com/x/test v0.5.0
-	gopkg.in/yaml.v3 v3.0.1
 )
+
+require github.com/josharian/intern v1.0.0 // indirect
