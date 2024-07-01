@@ -16,12 +16,12 @@ replace (
 )
 
 require (
-	go.osspkg.com/x/algorithms v0.5.0
+	go.osspkg.com/x/algorithms v0.5.1
 	go.osspkg.com/x/config v0.5.1
 	go.osspkg.com/x/console v0.5.1
 	go.osspkg.com/x/env v0.5.0
 	go.osspkg.com/x/errors v0.5.0
-	go.osspkg.com/x/logx v0.5.2
+	go.osspkg.com/x/logx v0.5.3
 	go.osspkg.com/x/syncing v0.5.1
 	go.osspkg.com/x/syscall v0.5.0
 	go.osspkg.com/x/test v0.5.0
