@@ -5,11 +5,15 @@ use (
 	./algorithms
 	./config
 	./console
+	./context
 	./domain
 	./env
 	./errors
+	./graphics
 	./io
+	./log
 	./random
+	./routine
 	./sync
 	./syscall
 	./test
