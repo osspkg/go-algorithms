@@ -3,14 +3,14 @@
  *  Use of this source code is governed by a BSD 3-Clause license that can be found in the LICENSE file.
  */
 
-package network
+package fd
 
 import (
 	"net"
 	"reflect"
 )
 
-func FileDescriptor(c net.Conn) int {
+func ByConnect(c net.Conn) int {
 	fd := reflect.Indirect(reflect.ValueOf(c)).FieldByName("fd")
 	pfd := reflect.Indirect(fd).FieldByName("pfd")
 	return int(pfd.FieldByName("Sysfd").Int())

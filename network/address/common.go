@@ -3,7 +3,7 @@
  *  Use of this source code is governed by a BSD 3-Clause license that can be found in the LICENSE file.
  */
 
-package network
+package address
 
 import (
 	"net"
@@ -33,7 +33,7 @@ func RandomPort(host string) (string, error) {
 	return v, nil
 }
 
-func CheckHostPort(addr string) string {
+func Check(addr string) string {
 	hp := strings.Split(addr, ":")
 	if len(hp) != 2 {
 		tmp := make([]string, 2)
@@ -53,19 +53,19 @@ func CheckHostPort(addr string) string {
 	return strings.Join(hp, ":")
 }
 
-func Normalize(p string, ips ...string) []string {
+func Normalize(defaultPort string, ips ...string) []string {
 	result := make([]string, 0, len(ips))
 	for _, ip := range ips {
 		host, port, err := net.SplitHostPort(ip)
 		if err != nil {
 			host = ip
-			port = p
+			port = defaultPort
 		}
 		if !IsValidIP(host) {
 			continue
 		}
 		if port == "0" {
-			port = p
+			port = defaultPort
 		}
 		result = append(result, net.JoinHostPort(host, port))
 	}
