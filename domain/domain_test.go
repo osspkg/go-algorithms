@@ -61,6 +61,20 @@ func TestUnit_Level(t *testing.T) {
 			},
 			want: ".",
 		},
+		{
+			args: args{
+				s:     "",
+				level: 0,
+			},
+			want: ".",
+		},
+		{
+			args: args{
+				s:     "a a  a",
+				level: 1,
+			},
+			want: ".",
+		},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
@@ -71,16 +85,44 @@ func TestUnit_Level(t *testing.T) {
 	}
 }
 
-func BenchmarkDomainLevel(b *testing.B) {
-	address := "www.domain.ltd."
-	expected := "domain.ltd."
-
+func Benchmark_Level(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		if got := Level(address, 2); got != expected {
-			b.Errorf("DomainLevel() = %v, want %v", got, expected)
+	b.ResetTimer()
+
+	b.RunParallel(func(p *testing.PB) {
+		for p.Next() {
+			Level("www.domain.ltd.", 2)
 		}
-	}
+	})
+}
+
+func Benchmark_IsValid(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(p *testing.PB) {
+		for p.Next() {
+			IsValid("www.domain.ltd.")
+		}
+	})
+}
+
+func Benchmark_NormalizeBytes(b *testing.B) {
+	b.ReportAllocs()
+	b.RunParallel(func(p *testing.PB) {
+		for p.Next() {
+			NormalizeBytes([]byte("  WWW.Domain.ltd    "))
+		}
+	})
+}
+
+func Benchmark_Normalize(b *testing.B) {
+	b.ReportAllocs()
+	b.RunParallel(func(p *testing.PB) {
+		for p.Next() {
+			Normalize("  WWW.Domain.ltd    ")
+		}
+	})
 }
 
 func TestUnit_Normalize(t *testing.T) {
@@ -92,7 +134,7 @@ func TestUnit_Normalize(t *testing.T) {
 	}{
 		{
 			name:    "Case1",
-			domain:  "1www.a-aa.com",
+			domain:  "1www.A-aa.com",
 			want:    "1www.a-aa.com.",
 			wantErr: false,
 		},
@@ -106,6 +148,42 @@ func TestUnit_Normalize(t *testing.T) {
 			name:    "Case3",
 			domain:  "com",
 			want:    "com.",
+			wantErr: false,
+		},
+		{
+			name:    "Case4",
+			domain:  "",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "Case5",
+			domain:  "a",
+			want:    "a.",
+			wantErr: false,
+		},
+		{
+			name:    "Case6",
+			domain:  "Ф",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "Case6.1",
+			domain:  " a aaaaaa",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "Case6.2",
+			domain:  "aaaaaa a ",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "Case7",
+			domain:  " a ",
+			want:    "a.",
 			wantErr: false,
 		},
 	}

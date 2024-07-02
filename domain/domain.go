@@ -7,8 +7,8 @@ package domain
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 var dot = byte('.')
@@ -48,18 +48,78 @@ func CountLevels(s string) int {
 	return strings.Count(ss, ".")
 }
 
-var domainRegexp = regexp.MustCompile(`^(?i)([a-z0-9-]+\.?)+$`)
-
-func IsValid(d string) bool {
-	return domainRegexp.MatchString(d)
+func IsValid(s string) bool {
+	d, b := 0, []byte(s)
+	for i := 0; i < len(b); i++ {
+		if b[i] == '.' {
+			d++
+		} else {
+			d = 0
+		}
+		switch true {
+		case b[i] >= utf8.RuneSelf || d > 1:
+			return false
+		case b[i] == '.', b[i] == '-', 'a' <= b[i] && b[i] <= 'z', '0' <= b[i] && b[i] <= '9', 'A' <= b[i] && b[i] <= 'Z':
+			continue
+		default:
+			return false
+		}
+	}
+	return true
 }
 
-func Normalize(domain string) (string, error) {
-	domain = strings.TrimSpace(domain)
-	if !domainRegexp.MatchString(domain) {
-		return "", fmt.Errorf("invalid domain")
+func Normalize(s string) (string, error) {
+	b, err := NormalizeBytes([]byte(s))
+	if err != nil {
+		return "", err
 	}
-	domain = strings.TrimRight(domain, ".")
-	domain = strings.ToLower(domain)
-	return domain + ".", nil
+	return string(b), nil
+}
+
+func NormalizeBytes(b []byte) ([]byte, error) {
+	if len(b) < 1 {
+		return nil, fmt.Errorf("invalid domain")
+	}
+	d := 0
+	for i := 0; i < len(b); i++ {
+		if b[i] == '.' {
+			d++
+		} else {
+			d = 0
+		}
+		switch true {
+		case b[i] >= utf8.RuneSelf || d > 1:
+			return nil, fmt.Errorf("invalid domain")
+		case b[i] == '.', b[i] == '-', 'a' <= b[i] && b[i] <= 'z', '0' <= b[i] && b[i] <= '9':
+			continue
+		case 'A' <= b[i] && b[i] <= 'Z':
+			b[i] += 'a' - 'A'
+		default:
+			b[i] = ' '
+		}
+	}
+	f, t, m := 0, len(b), len(b)-1
+	for i := 0; i < (len(b)+1)/2; i++ {
+		if b[i] == ' ' {
+			if i-f > 0 {
+				return nil, fmt.Errorf("invalid domain")
+			}
+			f++
+		}
+		if b[m-i] == ' ' {
+			if m-i-t < -1 {
+				return nil, fmt.Errorf("invalid domain")
+			}
+			t--
+		}
+	}
+	if b[t-1] != '.' {
+		if t <= m {
+			b[t] = '.'
+		} else {
+			b = append(b, '.')
+		}
+		t++
+	}
+	return b[f:t], nil
 }
