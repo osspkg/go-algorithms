@@ -6,6 +6,7 @@
 package random
 
 import (
+	crand "crypto/rand"
 	"math/rand"
 	"time"
 )
@@ -44,4 +45,16 @@ func String(n int) string {
 func Shuffle(v []string) []string {
 	rnd.Shuffle(len(v), func(i, j int) { v[i], v[j] = v[j], v[i] })
 	return v
+}
+
+func CryptoBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	var err error
+	for i := 0; i < 10; i++ {
+		if _, err = crand.Read(b); err != nil {
+			continue
+		}
+		return b, nil
+	}
+	return nil, err
 }

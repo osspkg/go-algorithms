@@ -39,7 +39,7 @@ func (v *err) Unwrap() error {
 }
 
 func (v *err) WithTrace() {
-	v.trace = runtimeTrace(10)
+	v.trace = RuntimeTrace(10)
 }
 
 func Trace(cause error, message string, args ...interface{}) error {

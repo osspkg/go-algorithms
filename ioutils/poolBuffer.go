@@ -30,8 +30,6 @@ func (v *Buffer[T]) Put(t T) {
 	v.pool.Put(t)
 }
 
-///////////////////////////////////////////////////////////////////
-
 type SliceBuffer[T any] struct {
 	B []T
 }

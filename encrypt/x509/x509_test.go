@@ -17,7 +17,7 @@ func TestUnit_X509(t *testing.T) {
 		Organization: "Demo Inc.",
 	}
 
-	crt, err := x509.NewCertCA(conf, time.Hour*24*365*10, "Demo Root R1")
+	crt, err := x509.NewCA(conf, time.Hour*24*365*10, "Demo Root R1")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

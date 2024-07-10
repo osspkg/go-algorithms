@@ -59,7 +59,10 @@ func IsValid(s string) bool {
 		switch true {
 		case b[i] >= utf8.RuneSelf || d > 1:
 			return false
-		case b[i] == '.', b[i] == '-', 'a' <= b[i] && b[i] <= 'z', '0' <= b[i] && b[i] <= '9', 'A' <= b[i] && b[i] <= 'Z':
+		case b[i] == '.', b[i] == '-',
+			'a' <= b[i] && b[i] <= 'z',
+			'0' <= b[i] && b[i] <= '9',
+			'A' <= b[i] && b[i] <= 'Z':
 			continue
 		default:
 			return false
@@ -90,7 +93,9 @@ func NormalizeBytes(b []byte) ([]byte, error) {
 		switch true {
 		case b[i] >= utf8.RuneSelf || d > 1:
 			return nil, fmt.Errorf("invalid domain")
-		case b[i] == '.', b[i] == '-', 'a' <= b[i] && b[i] <= 'z', '0' <= b[i] && b[i] <= '9':
+		case b[i] == '.', b[i] == '-',
+			'a' <= b[i] && b[i] <= 'z',
+			'0' <= b[i] && b[i] <= '9':
 			continue
 		case 'A' <= b[i] && b[i] <= 'Z':
 			b[i] += 'a' - 'A'

@@ -69,25 +69,23 @@ func generate(c *Config, ttl time.Duration, sn int64, ca *Cert, cn ...string) (*
 		Subject:      c.ToSubject(),
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().Add(ttl),
-		ExtKeyUsage:  []cx509.ExtKeyUsage{cx509.ExtKeyUsageClientAuth, cx509.ExtKeyUsageServerAuth},
 	}
 
-	var (
-		bits int
-		b    []byte
-	)
+	var b []byte
 
 	if ca == nil {
-		bits = 4096
 		crt.IsCA = true
 		crt.BasicConstraintsValid = true
-		crt.KeyUsage = cx509.KeyUsageDigitalSignature | cx509.KeyUsageCertSign
+		crt.MaxPathLenZero = true
+		crt.MaxPathLen = 0
+		crt.KeyUsage = cx509.KeyUsageKeyEncipherment | cx509.KeyUsageDigitalSignature |
+			cx509.KeyUsageCertSign | cx509.KeyUsageCRLSign
 		if len(cn) > 0 {
 			crt.Subject.CommonName = cn[0]
 		}
 	} else {
-		bits = 2048
-		crt.KeyUsage = cx509.KeyUsageDigitalSignature
+		crt.KeyUsage = cx509.KeyUsageKeyEncipherment | cx509.KeyUsageDigitalSignature | cx509.KeyUsageKeyAgreement
+		crt.ExtKeyUsage = []cx509.ExtKeyUsage{cx509.ExtKeyUsageClientAuth, cx509.ExtKeyUsageServerAuth}
 		crt.PermittedDNSDomainsCritical = true
 		for i, s := range cn {
 			if i == 0 {
@@ -97,7 +95,7 @@ func generate(c *Config, ttl time.Duration, sn int64, ca *Cert, cn ...string) (*
 		}
 	}
 
-	pk, err := rsa.GenerateKey(rand.Reader, bits)
+	pk, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, errors.Wrapf(err, "generate private key")
 	}
@@ -148,7 +146,7 @@ func generate(c *Config, ttl time.Duration, sn int64, ca *Cert, cn ...string) (*
 	}, nil
 }
 
-func NewCertCA(c *Config, ttl time.Duration, cn string) (*Cert, error) {
+func NewCA(c *Config, ttl time.Duration, cn string) (*Cert, error) {
 	return generate(c, ttl, 1, nil, cn)
 }
 

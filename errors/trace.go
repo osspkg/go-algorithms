@@ -10,7 +10,7 @@ import (
 	"runtime"
 )
 
-func runtimeTrace(c int) string {
+func RuntimeTrace(c int) string {
 	list := make([]uintptr, c)
 
 	n := runtime.Callers(4, list)

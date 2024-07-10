@@ -8,9 +8,9 @@ package aesgcm
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"fmt"
-	"io"
+
+	"go.osspkg.com/x/random"
 )
 
 const keySize = 32
@@ -20,14 +20,14 @@ type Codec struct {
 	block cipher.Block
 }
 
-func New(key string) (*Codec, error) {
-	kb := []byte(key)
-	if len(kb) < keySize {
-		return nil, fmt.Errorf("invalid key len")
+func New(key []byte) (*Codec, error) {
+	if len(key) != keySize {
+		return nil, fmt.Errorf("invalid key len, want %d got %d", keySize, len(key))
 	}
 	obj := &Codec{
-		key: kb[:keySize],
+		key: make([]byte, keySize),
 	}
+	copy(obj.key, key)
 	block, err := aes.NewCipher(obj.key)
 	if err != nil {
 		return nil, err
@@ -41,8 +41,8 @@ func (v *Codec) Encrypt(plaintext []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+	nonce, err := random.CryptoBytes(gcm.NonceSize())
+	if err != nil {
 		return nil, err
 	}
 	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)

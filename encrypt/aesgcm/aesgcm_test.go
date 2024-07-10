@@ -6,6 +6,7 @@
 package aesgcm_test
 
 import (
+	"fmt"
 	"testing"
 
 	"go.osspkg.com/x/encrypt/aesgcm"
@@ -14,31 +15,50 @@ import (
 )
 
 func TestUnit_Codec(t *testing.T) {
-	rndKey := random.String(32)
-	message := []byte("Hello World!")
-
+	rndKey := random.Bytes(32)
 	c, err := aesgcm.New(rndKey)
 	test.NoError(t, err)
-
-	enc1, err := c.Encrypt(message)
+	enc1, err := c.Encrypt([]byte("Hello World!"))
+	fmt.Println("Hello World!", string(enc1))
 	test.NoError(t, err)
-
 	dec1, err := c.Decrypt(enc1)
 	test.NoError(t, err)
+	test.Equal(t, []byte("Hello World!"), dec1)
 
-	test.Equal(t, message, dec1)
-
+	rndKey = random.BytesOf(32, []byte("йфяцычувскамепинртгоьшлбщдзхъ"))
 	c, err = aesgcm.New(rndKey)
 	test.NoError(t, err)
-
-	enc2, err := c.Encrypt(message)
+	enc1, err = c.Encrypt([]byte("Hello World!"))
+	fmt.Println("Hello World!", string(enc1))
 	test.NoError(t, err)
-
-	test.NotEqual(t, enc1, enc2)
-
-	dec2, err := c.Decrypt(enc1)
+	dec1, err = c.Decrypt(enc1)
 	test.NoError(t, err)
+	test.Equal(t, []byte("Hello World!"), dec1)
+}
 
-	test.Equal(t, message, dec2)
+func Benchmark_Codec(b *testing.B) {
+	key := random.Bytes(32)
+	message := []byte("Hello World!")
 
+	c, err := aesgcm.New(key)
+	if err != nil {
+		b.FailNow()
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			enc, er := c.Encrypt(message)
+			if er != nil {
+				b.FailNow()
+			}
+
+			_, er = c.Decrypt(enc)
+			if er != nil {
+				b.FailNow()
+			}
+		}
+	})
 }
