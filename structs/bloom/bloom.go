@@ -144,14 +144,14 @@ func (b *Bloom) Restore(r io.Reader) error {
 		return fmt.Errorf("read countSalt: %w", err)
 	}
 
-	count, err := strconv.ParseInt(string(countSalt[:len(countSalt)-1]), 10, 64)
+	count, err := strconv.Atoi(string(countSalt[:len(countSalt)-1]))
 	if err != nil {
 		return fmt.Errorf("invalid countSalt: %w", err)
 	}
 
 	b.salts = make([][saltSize]byte, count)
 
-	for i := 0; i < int(count); i++ {
+	for i := 0; i < count; i++ {
 		salt, err0 := reader.ReadBytes('\n')
 		if err0 != nil {
 			return fmt.Errorf("read salt[%d]: %w", i, err0)
