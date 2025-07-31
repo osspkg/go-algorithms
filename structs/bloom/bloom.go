@@ -16,22 +16,31 @@
 package bloom
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/rand"
+	"encoding"
 	"encoding/binary"
+	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"hash"
+	"io"
 	"math"
+	"strconv"
 	"sync"
 
 	"github.com/cespare/xxhash/v2"
+
+	"go.osspkg.com/algorithms/structs/bitmap"
 )
 
-const blockSize = 64
+const saltSize = 8
 
 type Bloom struct {
-	bits  []uint64
+	bits  *bitmap.Bitmap
 	size  uint64
-	salts [][64]byte
+	salts [][saltSize]byte
 
 	optSize uint64
 	optRate float64
@@ -58,7 +67,7 @@ func Quantity(size uint64, rate float64) Option {
 func New(opts ...Option) (*Bloom, error) {
 	b := &Bloom{
 		optSize: 10_000_000,
-		optRate: 0.001,
+		optRate: 0.1,
 		pool:    &sync.Pool{New: func() any { return xxhash.New() }},
 	}
 
@@ -69,95 +78,220 @@ func New(opts ...Option) (*Bloom, error) {
 	if b.optSize == 0 {
 		return nil, fmt.Errorf("bitset size cannot be 0")
 	}
-	if b.optRate <= 0 || b.optRate >= 1.0 {
-		return nil, fmt.Errorf("false positive rate must be between 0 and 1")
+	if b.optRate <= 0.0 || b.optRate >= 1.0 {
+		return nil, fmt.Errorf("false positive rate must be between 0.0 and 1.0")
 	}
 
-	m, k := b.calcOptimalParams(b.optSize, b.optRate)
+	m, k := calcOptimalParams(b.optSize, b.optRate)
 
 	b.size = m
-	b.bits = make([]uint64, m/blockSize+1)
-	b.salts = make([][64]byte, k)
+	b.bits = bitmap.New(m, bitmap.DisableLock())
+	b.salts = make([][saltSize]byte, k)
 
 	for i := 0; i < int(k); i++ {
 		if _, err := rand.Read(b.salts[i][:]); err != nil {
 			return nil, fmt.Errorf("generate hash salt: %w", err)
 		}
+
+		b.salts[i] = [saltSize]byte(bytes.ReplaceAll(b.salts[i][:], []byte("\n"), []byte("~")))
 	}
 
 	return b, nil
 }
 
-func (b *Bloom) MaxElements() uint64 {
+func (b *Bloom) Dump(w io.Writer) error {
+	if _, err := w.Write([]byte("OSSPkg:bloom\n")); err != nil {
+		return fmt.Errorf("write header: %w", err)
+	}
+
+	if _, err := fmt.Fprintf(w, "%d\n", len(b.salts)); err != nil {
+		return fmt.Errorf("write salt count: %w", err)
+	}
+
+	for _, salt := range b.salts {
+		if _, err := w.Write(salt[:]); err != nil {
+			return fmt.Errorf("write salt: %w", err)
+		}
+
+		if _, err := w.Write([]byte("\n")); err != nil {
+			return fmt.Errorf("write salt: %w", err)
+		}
+	}
+
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 
-	return b.size
+	if _, err := w.Write(b.bits.Dump()); err != nil {
+		return fmt.Errorf("write bitmap: %w", err)
+	}
+
+	return nil
 }
 
-func (b *Bloom) SizeBytes() int {
-	b.mux.RLock()
-	defer b.mux.RUnlock()
+func (b *Bloom) Restore(r io.Reader) error {
+	reader := bufio.NewReader(r)
 
-	return len(b.bits) * 8
-}
+	head, err := reader.ReadBytes('\n')
+	if err != nil {
+		return fmt.Errorf("read header: %w", err)
+	}
+	if !bytes.Equal(head[:len(head)-1], []byte("OSSPkg:bloom")) {
+		return fmt.Errorf("invalid header")
+	}
 
-func (b *Bloom) Add(v []byte) {
+	countSalt, err := reader.ReadBytes('\n')
+	if err != nil {
+		return fmt.Errorf("read countSalt: %w", err)
+	}
+
+	count, err := strconv.Atoi(string(countSalt[:len(countSalt)-1]))
+	if err != nil {
+		return fmt.Errorf("invalid countSalt: %w", err)
+	}
+
+	if count <= 0 {
+		return fmt.Errorf("invalid countSalt: got negative value")
+	}
+
+	b.salts = make([][saltSize]byte, count)
+
+	for i := 0; i < count; i++ {
+		salt, err0 := reader.ReadBytes('\n')
+		if err0 != nil {
+			return fmt.Errorf("read salt[%d]: %w", i, err0)
+		}
+
+		salt = salt[:len(salt)-1]
+		if len(salt) != saltSize {
+			return fmt.Errorf("invalid salt[%d], want 64 got %d", i, len(salt))
+		}
+
+		b.salts[i] = [saltSize]byte(salt)
+	}
+
+	bm, err := io.ReadAll(reader)
+	if err != nil {
+		return fmt.Errorf("read bitmap: %w", err)
+	}
+
 	b.mux.Lock()
 	defer b.mux.Unlock()
 
-	for i := 0; i < len(b.salts)-1; i++ {
-		p := b.createHash(i, v)
-		index, num := b.getIndex(p)
-		b.bits[index] |= num
-	}
+	b.bits.Restore(bm)
+
+	return nil
 }
 
-func (b *Bloom) Contain(v []byte) bool {
-	b.mux.RLock()
-	defer b.mux.RUnlock()
-
-	for i := 0; i < len(b.salts)-1; i++ {
-		p := b.createHash(i, v)
-		index, num := b.getIndex(p)
-		if b.bits[index]&num > 0 {
-			continue
-		}
-		return false
-	}
-	return true
-}
-
-func (b *Bloom) createHash(saltIndex int, key []byte) uint64 {
+func (b *Bloom) Add(arg any) {
 	h, ok := b.pool.Get().(hash.Hash)
 	if !ok {
 		panic("failed get hash function from pool")
 	}
 	defer func() {
-		h.Reset()
 		b.pool.Put(h)
 	}()
 
-	h.Write(key)
-	h.Write(b.salts[saltIndex][:])
+	val := anyToBytes(arg)
 
-	return binary.BigEndian.Uint64(h.Sum(nil)) % b.size
+	b.mux.Lock()
+	defer b.mux.Unlock()
+
+	for i := 0; i < len(b.salts); i++ {
+		h.Reset()
+		h.Write(val)
+		h.Write(b.salts[i][:])
+		key := binary.BigEndian.Uint64(h.Sum(nil)) % b.size
+
+		b.bits.Set(key)
+	}
 }
 
-func (*Bloom) getIndex(p uint64) (uint64, uint64) {
-	index := uint64(math.Ceil(float64(p+1)/blockSize)) - 1
-	num := uint64(1) << (p - index*blockSize)
-	return index, num
+func (b *Bloom) Contain(arg any) bool {
+	h, ok := b.pool.Get().(hash.Hash)
+	if !ok {
+		panic("failed get hash function from pool")
+	}
+	defer func() {
+		b.pool.Put(h)
+	}()
+
+	val := anyToBytes(arg)
+
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+
+	for i := 0; i < len(b.salts); i++ {
+		h.Reset()
+		h.Write(val)
+		h.Write(b.salts[i][:])
+		key := binary.BigEndian.Uint64(h.Sum(nil)) % b.size
+
+		if !b.bits.Has(key) {
+			return false
+		}
+	}
+	return true
 }
 
-func (*Bloom) calcOptimalParams(n uint64, p float64) (m, k uint64) {
-	m = uint64(math.Ceil(-float64(n) * math.Log(p) / math.Pow(math.Log(2.0), 2.0)))
-	if m == 0 {
-		m = 1
+func calcOptimalParams(n uint64, p float64) (uint64, uint64) {
+	m := -(float64(n) * math.Log(p)) / math.Pow(math.Log(2.0), 2.0)
+	if m < 1 {
+		m = 1.0
 	}
-	k = uint64(math.Ceil(float64(m) * math.Log(2.0) / float64(n)))
-	if k == 0 {
-		k = 1
+	k := (m / float64(n)) * math.Log(2.0)
+	if k < 1 {
+		k = 1.0
 	}
-	return
+	return uint64(math.Ceil(m)), uint64(math.Ceil(k))
+}
+
+type byter interface {
+	Bytes() []byte
+}
+
+func anyToBytes(arg any) []byte {
+	switch value := arg.(type) {
+	case []byte:
+		return value
+	case byter:
+		return value.Bytes()
+	case string:
+		return []byte(value)
+	case fmt.Stringer:
+		return []byte(value.String())
+	case int64:
+		return binary.AppendVarint(nil, value)
+	case int32:
+		return binary.AppendVarint(nil, int64(value))
+	case int16:
+		return binary.AppendVarint(nil, int64(value))
+	case int8:
+		return binary.AppendVarint(nil, int64(value))
+	case int:
+		return binary.AppendVarint(nil, int64(value))
+	case uint64:
+		return binary.AppendUvarint(nil, value)
+	case uint32:
+		return binary.AppendUvarint(nil, uint64(value))
+	case uint16:
+		return binary.AppendUvarint(nil, uint64(value))
+	case uint8:
+		return binary.AppendUvarint(nil, uint64(value))
+	case uint:
+		return binary.AppendUvarint(nil, uint64(value))
+	case json.Marshaler:
+		bb, _ := value.MarshalJSON()
+		return bb
+	case encoding.BinaryMarshaler:
+		bb, _ := value.MarshalBinary()
+		return bb
+	case encoding.TextMarshaler:
+		bb, _ := value.MarshalText()
+		return bb
+	case gob.GobEncoder:
+		bb, _ := value.GobEncode()
+		return bb
+	default:
+		return []byte(fmt.Sprintf("%+v", arg))
+	}
 }
