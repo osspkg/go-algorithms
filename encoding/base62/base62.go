@@ -5,7 +5,11 @@
 
 package base62
 
-import "go.osspkg.com/algorithms/sorts"
+import (
+	"bytes"
+
+	"go.osspkg.com/algorithms/sorts"
+)
 
 const size = 62
 
@@ -40,8 +44,8 @@ func (v *Base62) Encode(id uint64) string {
 
 func (v *Base62) Decode(data string) uint64 {
 	var id uint64
-	for _, b := range []byte(data) {
-		id = id*size + v.dec[b]
+	for _, r := range data {
+		id = id*size + uint64(bytes.IndexRune(v.enc, r))
 	}
 	return id
 }
