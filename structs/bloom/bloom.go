@@ -149,6 +149,10 @@ func (b *Bloom) Restore(r io.Reader) error {
 		return fmt.Errorf("invalid countSalt: %w", err)
 	}
 
+	if count < 0 {
+		return fmt.Errorf("invalid countSalt: got negative value")
+	}
+
 	b.salts = make([][saltSize]byte, count)
 
 	for i := 0; i < count; i++ {
