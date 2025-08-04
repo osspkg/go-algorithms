@@ -10,6 +10,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
+	"fmt"
 	"hash"
 	"hash/fnv"
 	"reflect"
@@ -20,7 +21,7 @@ import (
 )
 
 func TestUnit_Bloom(t *testing.T) {
-	bf, err := New(Quantity(1000, 0.00001))
+	bf, err := New(Quantity(4, 0.01))
 	casecheck.NoError(t, err)
 
 	bf.Add("hello")
@@ -34,8 +35,16 @@ func TestUnit_Bloom(t *testing.T) {
 
 	buf := bytes.NewBuffer(nil)
 	casecheck.NoError(t, bf.Dump(buf))
-	//fmt.Println(string(buf.Bytes()))
+	b1 := buf.Bytes()
+
+	fmt.Println(string(b1))
+
 	casecheck.NoError(t, bf.Restore(buf))
+	buf = bytes.NewBuffer(nil)
+	casecheck.NoError(t, bf.Dump(buf))
+	b2 := buf.Bytes()
+
+	casecheck.Equal(t, b1, b2)
 
 	casecheck.False(t, bf.Contain("users"))
 	casecheck.True(t, bf.Contain("user"))

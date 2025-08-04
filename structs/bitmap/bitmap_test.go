@@ -12,6 +12,21 @@ import (
 	"go.osspkg.com/casecheck"
 )
 
+func TestUnit_Bitmap_CopyTO(t *testing.T) {
+	src := New(65)
+	src.Set(1)
+	src.Set(5)
+	src.Set(60)
+
+	dst := New(100)
+	src.CopyTo(dst)
+
+	casecheck.Equal(t, src.size, dst.size)
+	casecheck.Equal(t, src.data, dst.data)
+	casecheck.Equal(t, src.lockoff, dst.lockoff)
+	casecheck.Equal(t, src.max, dst.max)
+}
+
 func TestUnit_Bitmap_calcBlockIndex(t *testing.T) {
 	bm := New(65)
 
