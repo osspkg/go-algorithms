@@ -99,7 +99,27 @@ func New(opts ...Option) (*Bloom, error) {
 	return b, nil
 }
 
+func (b *Bloom) CopyTo(dst *Bloom) {
+	b.mux.Lock()
+	defer b.mux.Unlock()
+
+	dst.mux.Lock()
+	defer dst.mux.Unlock()
+
+	b.bits.CopyTo(dst.bits)
+	dst.size = b.size
+
+	dst.salts = make([][saltSize]byte, len(b.salts))
+	copy(dst.salts, b.salts)
+
+	dst.optSize = b.optSize
+	dst.optRate = b.optRate
+}
+
 func (b *Bloom) Dump(w io.Writer) error {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+
 	if _, err := w.Write([]byte("OSSPkg:bloom\n")); err != nil {
 		return fmt.Errorf("write header: %w", err)
 	}
@@ -118,9 +138,6 @@ func (b *Bloom) Dump(w io.Writer) error {
 		}
 	}
 
-	b.mux.RLock()
-	defer b.mux.RUnlock()
-
 	if _, err := w.Write(b.bits.Dump()); err != nil {
 		return fmt.Errorf("write bitmap: %w", err)
 	}
@@ -129,6 +146,9 @@ func (b *Bloom) Dump(w io.Writer) error {
 }
 
 func (b *Bloom) Restore(r io.Reader) error {
+	b.mux.Lock()
+	defer b.mux.Unlock()
+
 	reader := bufio.NewReader(r)
 
 	head, err := reader.ReadBytes('\n')
@@ -173,9 +193,6 @@ func (b *Bloom) Restore(r io.Reader) error {
 	if err != nil {
 		return fmt.Errorf("read bitmap: %w", err)
 	}
-
-	b.mux.Lock()
-	defer b.mux.Unlock()
 
 	b.bits.Restore(bm)
 

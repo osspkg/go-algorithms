@@ -45,6 +45,23 @@ func New(maxIndex uint64, opts ...Option) *Bitmap {
 	return bm
 }
 
+func (b *Bitmap) CopyTo(dst *Bitmap) {
+	if !b.lockoff {
+		b.mux.Lock()
+		defer b.mux.Unlock()
+	}
+	if !dst.lockoff {
+		dst.mux.Lock()
+		defer dst.mux.Unlock()
+	}
+
+	dst.data = make([]byte, len(b.data))
+	copy(dst.data, b.data)
+	dst.size = b.size
+	dst.max = b.max
+	dst.lockoff = b.lockoff
+}
+
 func (b *Bitmap) Set(index uint64) {
 	if index > b.max {
 		return
