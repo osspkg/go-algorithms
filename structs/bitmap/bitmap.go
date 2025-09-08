@@ -11,38 +11,132 @@ import (
 
 const (
 	blockSize = 8
+	MaxIndex  = uint64(1 << 34)
 )
 
 type Bitmap struct {
-	data    []byte
-	size    uint64
+	bits []byte
+
+	blocks  uint64
 	max     uint64
-	mux     sync.RWMutex
 	lockoff bool
+
+	mux sync.RWMutex
 }
 
 type Option func(*Bitmap)
 
-func DisableLock() Option {
+func OptDisableLock() Option {
 	return func(o *Bitmap) {
 		o.lockoff = true
 	}
 }
 
-func New(maxIndex uint64, opts ...Option) *Bitmap {
-	size := maxIndex/blockSize + maxIndex%blockSize
-
-	bm := &Bitmap{
-		max:  size * blockSize,
-		size: size,
-		data: make([]byte, size),
+func OptMaxIndex(index uint64) Option {
+	return func(o *Bitmap) {
+		o.max = index
 	}
+}
+
+func New(opts ...Option) *Bitmap {
+	bm := &Bitmap{max: 1}
 
 	for _, opt := range opts {
 		opt(bm)
 	}
 
+	bm.resize(bm.max)
+
 	return bm
+}
+
+func (b *Bitmap) resize(index uint64) {
+	size := index / blockSize
+	if index-(size%blockSize) > 0 {
+		size++
+	}
+
+	b.bits = append(b.bits, make([]byte, size-b.blocks)...)
+	b.blocks = uint64(len(b.bits))
+	b.max = b.blocks*blockSize - 1
+}
+
+func (b *Bitmap) getBlock(index uint64) uint64 {
+	return index / blockSize
+}
+
+func (b *Bitmap) getBit(index uint64) byte {
+	return 1 << (index - b.getBlock(index)*blockSize)
+}
+
+func (b *Bitmap) Set(index uint64) {
+	if index > MaxIndex {
+		return
+	}
+
+	if !b.lockoff {
+		b.mux.Lock()
+		defer b.mux.Unlock()
+	}
+
+	if index > b.max {
+		b.resize(index)
+	}
+
+	b.bits[b.getBlock(index)] |= b.getBit(index)
+}
+
+func (b *Bitmap) Del(index uint64) {
+	if index > b.max || index > MaxIndex {
+		return
+	}
+
+	if !b.lockoff {
+		b.mux.Lock()
+		defer b.mux.Unlock()
+	}
+
+	b.bits[b.getBlock(index)] &^= b.getBit(index)
+}
+
+func (b *Bitmap) Has(index uint64) bool {
+	if index > b.max || index > MaxIndex {
+		return false
+	}
+
+	if !b.lockoff {
+		b.mux.RLock()
+		defer b.mux.RUnlock()
+	}
+
+	return (b.bits[b.getBlock(index)] & b.getBit(index)) > 0
+}
+
+func (b *Bitmap) MarshalBinary() ([]byte, error) {
+	if !b.lockoff {
+		b.mux.RLock()
+		defer b.mux.RUnlock()
+	}
+
+	out := make([]byte, b.blocks)
+	copy(out, b.bits)
+
+	return out, nil
+}
+
+func (b *Bitmap) UnmarshalBinary(in []byte) error {
+	if !b.lockoff {
+		b.mux.Lock()
+		defer b.mux.Unlock()
+	}
+
+	b.bits = make([]byte, len(in))
+	copy(b.bits, in)
+
+	b.blocks = uint64(len(in))
+	b.max = b.blocks * blockSize
+
+	return nil
 }
 
 func (b *Bitmap) CopyTo(dst *Bitmap) {
@@ -55,72 +149,9 @@ func (b *Bitmap) CopyTo(dst *Bitmap) {
 		defer dst.mux.Unlock()
 	}
 
-	dst.data = make([]byte, len(b.data))
-	copy(dst.data, b.data)
-	dst.size = b.size
+	dst.bits = make([]byte, len(b.bits))
+	copy(dst.bits, b.bits)
+	dst.blocks = b.blocks
 	dst.max = b.max
 	dst.lockoff = b.lockoff
-}
-
-func (b *Bitmap) Set(index uint64) {
-	if index > b.max {
-		return
-	}
-
-	if !b.lockoff {
-		b.mux.Lock()
-		defer b.mux.Unlock()
-	}
-
-	b.data[index%b.size] |= 1 << (index % blockSize)
-}
-
-func (b *Bitmap) Del(index uint64) {
-	if index > b.max {
-		return
-	}
-
-	if !b.lockoff {
-		b.mux.Lock()
-		defer b.mux.Unlock()
-	}
-
-	b.data[index%b.size] &^= 1 << (index % blockSize)
-}
-
-func (b *Bitmap) Has(index uint64) bool {
-	if index > b.max {
-		return false
-	}
-
-	if !b.lockoff {
-		b.mux.RLock()
-		defer b.mux.RUnlock()
-	}
-
-	return (b.data[index%b.size] & (1 << (index % blockSize))) > 0
-}
-
-func (b *Bitmap) Dump() []byte {
-	if !b.lockoff {
-		b.mux.RLock()
-		defer b.mux.RUnlock()
-	}
-
-	out := make([]byte, b.size)
-	copy(out, b.data)
-	return out
-}
-
-func (b *Bitmap) Restore(in []byte) {
-	if !b.lockoff {
-		b.mux.Lock()
-		defer b.mux.Unlock()
-	}
-
-	b.data = make([]byte, len(in))
-	copy(b.data, in)
-
-	b.size = uint64(len(in))
-	b.max = b.size * blockSize
 }

@@ -85,7 +85,7 @@ func New(opts ...Option) (*Bloom, error) {
 	m, k := calcOptimalParams(b.optSize, b.optRate)
 
 	b.size = m
-	b.bits = bitmap.New(m, bitmap.DisableLock())
+	b.bits = bitmap.New(bitmap.OptMaxIndex(m), bitmap.OptDisableLock())
 	b.salts = make([][saltSize]byte, k)
 
 	for i := 0; i < int(k); i++ {
@@ -138,7 +138,12 @@ func (b *Bloom) Dump(w io.Writer) error {
 		}
 	}
 
-	if _, err := w.Write(b.bits.Dump()); err != nil {
+	bb, err := b.bits.MarshalBinary()
+	if err != nil {
+		return fmt.Errorf("marshal bitset: %w", err)
+	}
+
+	if _, err = w.Write(bb); err != nil {
 		return fmt.Errorf("write bitmap: %w", err)
 	}
 
@@ -194,9 +199,7 @@ func (b *Bloom) Restore(r io.Reader) error {
 		return fmt.Errorf("read bitmap: %w", err)
 	}
 
-	b.bits.Restore(bm)
-
-	return nil
+	return b.bits.UnmarshalBinary(bm)
 }
 
 func (b *Bloom) Add(arg any) {
