@@ -30,6 +30,9 @@ func newNode[K cmp.Ordered, V any](size int, isLeaf bool) *node[K, V] {
 	return x
 }
 
+// Linear scans are cheaper for narrow nodes; binary search is used above this width.
+const linearSearchThreshold = 255
+
 type BTree[K cmp.Ordered, V any] struct {
 	degree  int
 	maxKeys int
@@ -55,23 +58,53 @@ func New[K cmp.Ordered, V any](degree int) *BTree[K, V] {
 func (t *BTree[K, V]) Find(key K) (V, bool) {
 	t.mu.RLock()
 
-	curr := t.root
-	for curr != nil {
-		i := 0
-		for i < curr.numKeys && key > curr.keys[i] {
-			i++
+	if t.maxKeys <= linearSearchThreshold {
+		curr := t.root
+		for curr != nil {
+			i := 0
+			for i < curr.numKeys && key > curr.keys[i] {
+				i++
+			}
+			if i < curr.numKeys && key == curr.keys[i] {
+				value := curr.values[i]
+				t.mu.RUnlock()
+				return value, true
+			}
+			if curr.isLeaf {
+				break
+			}
+			curr = curr.children[i]
 		}
-
-		if i < curr.numKeys && key == curr.keys[i] {
-			value := curr.values[i]
-			t.mu.RUnlock()
-			return value, true
+	} else {
+		curr := t.root
+		for curr != nil {
+			i := 0
+			if curr.numKeys > linearSearchThreshold {
+				lo, hi := 0, curr.numKeys
+				for lo < hi {
+					mid := lo + (hi-lo)/2
+					if key > curr.keys[mid] {
+						lo = mid + 1
+					} else {
+						hi = mid
+					}
+				}
+				i = lo
+			} else {
+				for i < curr.numKeys && key > curr.keys[i] {
+					i++
+				}
+			}
+			if i < curr.numKeys && key == curr.keys[i] {
+				value := curr.values[i]
+				t.mu.RUnlock()
+				return value, true
+			}
+			if curr.isLeaf {
+				break
+			}
+			curr = curr.children[i]
 		}
-
-		if curr.isLeaf {
-			break
-		}
-		curr = curr.children[i]
 	}
 
 	var zero V
@@ -99,28 +132,20 @@ func (t *BTree[K, V]) splitChild(x *node[K, V], i int, y *node[K, V]) {
 	z := newNode[K, V](t.maxKeys, y.isLeaf)
 	z.numKeys = t.minKeys
 
-	for j := 0; j < t.minKeys; j++ {
-		z.keys[j] = y.keys[j+t.degree]
-		z.values[j] = y.values[j+t.degree]
-	}
+	copy(z.keys[:t.minKeys], y.keys[t.degree:t.degree+t.minKeys])
+	copy(z.values[:t.minKeys], y.values[t.degree:t.degree+t.minKeys])
 
 	if !y.isLeaf {
-		for j := 0; j < t.degree; j++ {
-			z.children[j] = y.children[j+t.degree]
-		}
+		copy(z.children[:t.degree], y.children[t.degree:t.degree*2])
 	}
 
 	y.numKeys = t.minKeys
 
-	for j := x.numKeys; j >= i+1; j-- {
-		x.children[j+1] = x.children[j]
-	}
+	copy(x.children[i+2:x.numKeys+2], x.children[i+1:x.numKeys+1])
 	x.children[i+1] = z
 
-	for j := x.numKeys - 1; j >= i; j-- {
-		x.keys[j+1] = x.keys[j]
-		x.values[j+1] = x.values[j]
-	}
+	copy(x.keys[i+1:x.numKeys+1], x.keys[i:x.numKeys])
+	copy(x.values[i+1:x.numKeys+1], x.values[i:x.numKeys])
 
 	x.keys[i] = y.keys[t.minKeys]
 	x.values[i] = y.values[t.minKeys]
@@ -129,19 +154,31 @@ func (t *BTree[K, V]) splitChild(x *node[K, V], i int, y *node[K, V]) {
 
 func (t *BTree[K, V]) insertNonFull(x *node[K, V], key K, val V) {
 	i := x.numKeys
-	for i > 0 && key < x.keys[i-1] {
-		i--
+	if x.numKeys <= linearSearchThreshold {
+		for i > 0 && key < x.keys[i-1] {
+			i--
+		}
+	} else {
+		lo, hi := 0, x.numKeys
+		for lo < hi {
+			mid := lo + (hi-lo)/2
+			if key < x.keys[mid] {
+				hi = mid
+			} else {
+				lo = mid + 1
+			}
+		}
+		i = lo
 	}
-	if i > 0 && key == x.keys[i-1] {
+	found := i > 0 && key == x.keys[i-1]
+	if found {
 		x.values[i-1] = val
 		return
 	}
 
 	if x.isLeaf {
-		for j := x.numKeys; j > i; j-- {
-			x.keys[j] = x.keys[j-1]
-			x.values[j] = x.values[j-1]
-		}
+		copy(x.keys[i+1:x.numKeys+1], x.keys[i:x.numKeys])
+		copy(x.values[i+1:x.numKeys+1], x.values[i:x.numKeys])
 		x.keys[i] = key
 		x.values[i] = val
 		x.numKeys++
@@ -178,16 +215,26 @@ func (t *BTree[K, V]) Delete(key K) {
 
 func (t *BTree[K, V]) deleteFromNode(x *node[K, V], key K) {
 	idx := 0
-	for idx < x.numKeys && key > x.keys[idx] {
-		idx++
+	if x.numKeys <= linearSearchThreshold {
+		for idx < x.numKeys && key > x.keys[idx] {
+			idx++
+		}
+	} else {
+		lo, hi := 0, x.numKeys
+		for lo < hi {
+			mid := lo + (hi-lo)/2
+			if key > x.keys[mid] {
+				lo = mid + 1
+			} else {
+				hi = mid
+			}
+		}
+		idx = lo
 	}
-
 	if idx < x.numKeys && key == x.keys[idx] {
 		if x.isLeaf {
-			for i := idx; i < x.numKeys-1; i++ {
-				x.keys[i] = x.keys[i+1]
-				x.values[i] = x.values[i+1]
-			}
+			copy(x.keys[idx:x.numKeys-1], x.keys[idx+1:x.numKeys])
+			copy(x.values[idx:x.numKeys-1], x.values[idx+1:x.numKeys])
 			x.numKeys--
 			var zeroK K
 			var zeroV V
@@ -270,15 +317,11 @@ func (t *BTree[K, V]) borrowFromPrev(x *node[K, V], idx int) {
 	child := x.children[idx]
 	sibling := x.children[idx-1]
 
-	for i := child.numKeys - 1; i >= 0; i-- {
-		child.keys[i+1] = child.keys[i]
-		child.values[i+1] = child.values[i]
-	}
+	copy(child.keys[1:child.numKeys+1], child.keys[:child.numKeys])
+	copy(child.values[1:child.numKeys+1], child.values[:child.numKeys])
 
 	if !child.isLeaf {
-		for i := child.numKeys; i >= 0; i-- {
-			child.children[i+1] = child.children[i]
-		}
+		copy(child.children[1:child.numKeys+2], child.children[:child.numKeys+1])
 		child.children[0] = sibling.children[sibling.numKeys]
 	}
 
@@ -311,15 +354,11 @@ func (t *BTree[K, V]) borrowFromNext(x *node[K, V], idx int) {
 	x.keys[idx] = sibling.keys[0]
 	x.values[idx] = sibling.values[0]
 
-	for i := 1; i < sibling.numKeys; i++ {
-		sibling.keys[i-1] = sibling.keys[i]
-		sibling.values[i-1] = sibling.values[i]
-	}
+	copy(sibling.keys[:sibling.numKeys-1], sibling.keys[1:sibling.numKeys])
+	copy(sibling.values[:sibling.numKeys-1], sibling.values[1:sibling.numKeys])
 
 	if !sibling.isLeaf {
-		for i := 1; i <= sibling.numKeys; i++ {
-			sibling.children[i-1] = sibling.children[i]
-		}
+		copy(sibling.children[:sibling.numKeys], sibling.children[1:sibling.numKeys+1])
 	}
 
 	child.numKeys++
@@ -339,24 +378,16 @@ func (t *BTree[K, V]) merge(x *node[K, V], idx int) {
 	child.keys[t.minKeys] = x.keys[idx]
 	child.values[t.minKeys] = x.values[idx]
 
-	for i := 0; i < sibling.numKeys; i++ {
-		child.keys[i+t.degree] = sibling.keys[i]
-		child.values[i+t.degree] = sibling.values[i]
-	}
+	copy(child.keys[t.degree:t.degree+sibling.numKeys], sibling.keys[:sibling.numKeys])
+	copy(child.values[t.degree:t.degree+sibling.numKeys], sibling.values[:sibling.numKeys])
 
 	if !child.isLeaf {
-		for i := 0; i <= sibling.numKeys; i++ {
-			child.children[i+t.degree] = sibling.children[i]
-		}
+		copy(child.children[t.degree:t.degree+sibling.numKeys+1], sibling.children[:sibling.numKeys+1])
 	}
 
-	for i := idx + 1; i < x.numKeys; i++ {
-		x.keys[i-1] = x.keys[i]
-		x.values[i-1] = x.values[i]
-	}
-	for i := idx + 2; i <= x.numKeys; i++ {
-		x.children[i-1] = x.children[i]
-	}
+	copy(x.keys[idx:x.numKeys-1], x.keys[idx+1:x.numKeys])
+	copy(x.values[idx:x.numKeys-1], x.values[idx+1:x.numKeys])
+	copy(x.children[idx+1:x.numKeys], x.children[idx+2:x.numKeys+1])
 
 	child.numKeys += sibling.numKeys + 1
 	x.numKeys--
