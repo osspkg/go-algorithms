@@ -36,6 +36,16 @@ requirements with `slices.SortFunc`/`sort.Slice`; when stability is required,
 explicitly use a stable standard-library sort because stability is not a general
 contract of these functions.
 
+| Function | Time | Extra storage | Stability |
+| --- | --- | --- | --- |
+| `Bubble` | O(n²), O(n) when already sorted | O(1) | Stable |
+| `Cocktail` | O(n²) | O(1) | Stable |
+| `Insertion` | O(n²), O(n) when already sorted | O(1) | Stable |
+| `Selection` | O(n²) | O(1) | Unstable |
+| `Heapsort` | O(n log n) | O(1) | Unstable |
+| `Merge` | O(n log n) | O(n) | No stability guarantee |
+| `Reverse` | O(n) | O(1) | Not applicable |
+
 Practical selection:
 
 - `Merge` and `Heapsort` — for the general `O(n log n)` case;

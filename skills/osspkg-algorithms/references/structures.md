@@ -33,11 +33,13 @@ func main() {
 `Set`, `Del`, and `Has` use `uint64` indices; the bitmap grows automatically to
 the requested index, but values above the exported `bitmap.MaxIndex` are
 ignored or treated as absent. `MarshalBinary` returns a copy of the raw bytes.
-`UnmarshalBinary` rejects empty input.
+`UnmarshalBinary` rejects empty input. The raw format has no versioned header.
 
 Operations are protected by an `RWMutex` by default. Use `OptDisableLock()` only
 when access is strictly single-threaded or synchronization is fully handled
-externally; it is not a safe default optimization.
+externally; it is not a safe default optimization. Even with the default lock,
+externally serialize a `Set` that may grow storage with concurrent `Has` or
+`Del` calls. `CopyTo` copies the source's lock setting along with its bit data.
 
 ## Bloom filter: `structs/bloom`
 
@@ -78,19 +80,21 @@ func main() {
 
 `Quantity(expectedItems, falsePositiveRate)` sets the expected number of items
 and the target false-positive probability; the size must be greater than zero,
-and the rate must be strictly between `0` and `1`. xxhash is used by default.
-With `HashFunc`, provide a `func() hash.Hash` factory such as `sha256.New`.
+and the rate must be strictly between `0` and `1`. Defaults are 10,000,000
+items and a 0.1 false-positive rate; xxhash is used by default. With `HashFunc`,
+provide a non-nil `func() hash.Hash` factory such as `sha256.New`. Each filter
+gets random salts, so independently created filters are not interchangeable.
 
 The filter answers "definitely not" or "possibly present": false positives are
 normal, and `Contain` does not replace the source of truth. Use the same key
 representation with `Add` and `Contain`; the library converts strings, bytes,
 integers, and values implementing supported interfaces into bytes.
 
-`Dump` stores the salts and bitmap, but does not store the hash function or the
-original `Quantity` for the consuming code. To restore, use the same quantity
-configuration and hash factory as when the filter was written, then check the
-error from `Restore`. `CopyTo` copies the filter state independently of the
-source.
+`Dump` stores the salts and bitmap, but not the hash function or the original
+`Quantity`; `Restore` is limited to 64 MiB. To restore, create the destination
+with the same quantity configuration and hash factory as the source, then
+check the error from `Restore`. `CopyTo` copies bits and salts but does not
+replace the destination's hash factory, which MUST match the source.
 
 ## B-tree: `trees/btree`
 
@@ -124,6 +128,9 @@ iterator.
 
 `BTree` protects `Find`, `Insert`, and `Delete` with an internal `RWMutex`, but
 do not copy the value after creation: pass around the pointer returned by `New`.
+Keys must have a consistent total ordering; do not use floating-point NaN keys.
+The degree controls keys per node, so choose it for the key type, workload, and
+memory/cache trade-offs.
 
 Verified examples in the checkout: `structs/bitmap/bitmap_test.go`,
 `structs/bloom/bloom_test.go`, and `trees/btree/btree_test.go`.

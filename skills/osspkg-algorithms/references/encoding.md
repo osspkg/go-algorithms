@@ -65,6 +65,7 @@ func main() {
 spaces, lowercase letters, and unpadded Base32. `delta` in `GenerateTOTP` is an
 offset measured in periods, not seconds. For HOTP, use
 `GenerateHOTP(secret, counter)` and `UrlHOTP(secret, account, issuer, counter)`.
+`UrlHOTP` includes both the counter and configured period in its query.
 `OptPeriod` clamps the period to 30–120 seconds, while an invalid secret or
 counter returns an error.
 
@@ -109,9 +110,14 @@ representation table: it must have an even length from 16 to 254, contain
 unique bytes, and exclude `0xff`. Configure it once at startup, before tokens
 are exchanged; the byte value of `T64` itself does not change.
 
+Reject input containing byte `0xff` before calling `Parse` or `ParseBytes`:
+these parsers can panic on that byte. `NewByTime` is predictable.
+`NewRandom` does not return an error and yields `Nil` if random reads fail.
+
 `T64` provides text/binary and SQL `Scanner`/`Valuer` integration: `Value`
 returns a string, while `Scan` accepts `nil`, empty values, `string`, and
-`[]byte`. For JSON, do not rely solely on the presence of `MarshalJSON`: the
+`[]byte`; nil and empty values leave the receiver unchanged. For JSON, do not
+rely solely on the presence of `MarshalJSON`: the
 current implementation delegates to `MarshalText` without adding JSON quotes.
 For JSON fields, use an explicit string wrapper and check the round-trip with
 `Parse` until this contract is separately confirmed.

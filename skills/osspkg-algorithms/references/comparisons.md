@@ -13,8 +13,8 @@ Public constructors:
 | `NewHamming[T]()` | equal-length sequences; counts positional mismatches |
 | `NewLevenshtein[T]()` | insertions, deletions, and substitutions |
 | `NewDamerauLevenshtein[T]()` | the same, plus adjacent transpositions |
-| `NewLCS[T]()` | similarity based on the longest common subsequence |
-| `NewJaroWinkler[T]()` | short sequences and near matches |
+| `NewLCS[T]()` | similarity based on the longest common subsequence, not substring |
+| `NewJaroWinkler[T]()` | Jaro-style matching-window similarity |
 
 `T` must satisfy `comparable`. The constructors return `comp.Comparer[T]`, so
 external code calls `Similarity`:
@@ -48,7 +48,9 @@ Selection notes:
   matter.
 - `Damerau-Levenshtein` is useful for swapped adjacent characters.
 - `LCS` better reflects the preserved order of a common subsequence.
-- `Jaro-Winkler` is useful for short values; calibrate thresholds on domain data.
+- `NewJaroWinkler` currently does not apply a separate Winkler prefix boost;
+  treat its result as Jaro-style similarity and calibrate thresholds on domain
+  data.
 
 Do not call `Distance` on a constructor result from an external package:
 implementations have internal distance methods, but their types are unexported

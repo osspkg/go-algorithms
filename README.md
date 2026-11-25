@@ -1,7 +1,7 @@
 # Algorithms
 
 [![Go Reference](https://pkg.go.dev/badge/go.osspkg.com/algorithms.svg)](https://pkg.go.dev/go.osspkg.com/algorithms)
-[![Go 1.24+](https://img.shields.io/badge/go-1.24%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![Go 1.26+](https://img.shields.io/badge/go-1.26%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
 A collection of generic algorithms, encoders, graphs, filters, and data
@@ -12,7 +12,7 @@ package you need; the module root does not expose a general-purpose API.
 
 ## Requirements
 
-- Go 1.24 or newer
+- Go 1.26 or newer
 
 ## Installation
 
@@ -22,18 +22,18 @@ go get go.osspkg.com/algorithms@latest
 
 ## Packages
 
-| Package | Provides |
-| --- | --- |
-| [`comp`](https://pkg.go.dev/go.osspkg.com/algorithms/comp) | Hamming, Levenshtein, Damerau-Levenshtein, LCS, and Jaro-Winkler sequence comparison |
-| [`sorts`](https://pkg.go.dev/go.osspkg.com/algorithms/sorts) | Bubble, cocktail, heap, insertion, merge, and selection sort; slice reversal |
-| [`graph/dfs`](https://pkg.go.dev/go.osspkg.com/algorithms/graph/dfs) | Generic depth-first topological sorting with cycle detection |
-| [`graph/kahn`](https://pkg.go.dev/go.osspkg.com/algorithms/graph/kahn) | String-keyed Kahn topological sorting with dependency subgraphs |
-| [`encoding/base62`](https://pkg.go.dev/go.osspkg.com/algorithms/encoding/base62) | Configurable Base62 encoding for `uint64` values |
-| [`encoding/otp`](https://pkg.go.dev/go.osspkg.com/algorithms/encoding/otp) | TOTP/HOTP generation and `otpauth` URLs |
-| [`encoding/token`](https://pkg.go.dev/go.osspkg.com/algorithms/encoding/token) | Compact `T64` identifiers with text, binary, and SQL integration |
-| [`structs/bitmap`](https://pkg.go.dev/go.osspkg.com/algorithms/structs/bitmap) | Concurrent growable bitmap |
-| [`structs/bloom`](https://pkg.go.dev/go.osspkg.com/algorithms/structs/bloom) | Space-efficient Bloom filter with persistence support |
-| [`trees/btree`](https://pkg.go.dev/go.osspkg.com/algorithms/trees/btree) | Concurrent generic B-tree |
+| Package | Provides | Guide |
+| --- | --- | --- |
+| [`comp`](https://pkg.go.dev/go.osspkg.com/algorithms/comp) | Hamming, Levenshtein, Damerau-Levenshtein, LCS, and Jaro-style sequence comparison | [README](comp/README.md) |
+| [`sorts`](https://pkg.go.dev/go.osspkg.com/algorithms/sorts) | Bubble, cocktail, heap, insertion, merge, and selection sort; slice reversal | [README](sorts/README.md) |
+| [`graph/dfs`](https://pkg.go.dev/go.osspkg.com/algorithms/graph/dfs) | Generic depth-first topological sorting with cycle detection | [README](graph/dfs/README.md) |
+| [`graph/kahn`](https://pkg.go.dev/go.osspkg.com/algorithms/graph/kahn) | String-keyed Kahn topological sorting with dependency subgraphs | [README](graph/kahn/README.md) |
+| [`encoding/base62`](https://pkg.go.dev/go.osspkg.com/algorithms/encoding/base62) | Configurable Base62 encoding for `uint64` values | [README](encoding/base62/README.md) |
+| [`encoding/otp`](https://pkg.go.dev/go.osspkg.com/algorithms/encoding/otp) | TOTP/HOTP generation and `otpauth` URLs | [README](encoding/otp/README.md) |
+| [`encoding/token`](https://pkg.go.dev/go.osspkg.com/algorithms/encoding/token) | Compact `T64` identifiers with text, binary, and SQL integration | [README](encoding/token/README.md) |
+| [`structs/bitmap`](https://pkg.go.dev/go.osspkg.com/algorithms/structs/bitmap) | Concurrent growable bitmap | [README](structs/bitmap/README.md) |
+| [`structs/bloom`](https://pkg.go.dev/go.osspkg.com/algorithms/structs/bloom) | Space-efficient Bloom filter with persistence support | [README](structs/bloom/README.md) |
+| [`trees/btree`](https://pkg.go.dev/go.osspkg.com/algorithms/trees/btree) | Concurrent generic B-tree | [README](trees/btree/README.md) |
 
 ## Usage
 
@@ -65,7 +65,8 @@ Choose the comparer according to the type of difference you need to model:
 - `NewLevenshtein` accounts for insertions, deletions, and substitutions.
 - `NewDamerauLevenshtein` also accounts for adjacent transpositions.
 - `NewLCS` measures the longest common subsequence.
-- `NewJaroWinkler` is suited to short values and near matches.
+- `NewJaroWinkler` currently uses Jaro-style matching-window similarity and
+  does not apply a separate Winkler prefix boost.
 
 ### Sort a slice
 
@@ -281,9 +282,10 @@ func main() {
 }
 ```
 
-`structs/bitmap` and `trees/btree` use synchronization by default. Disable
-bitmap locking only when access is strictly single-threaded or synchronized by
-the caller.
+`structs/bitmap` and `trees/btree` use synchronization by default. If a bitmap
+`Set` may grow its storage, serialize it with concurrent `Has` or `Del` calls.
+Disable bitmap locking only when access is strictly single-threaded or
+synchronized by the caller.
 
 ## Testing
 

@@ -33,8 +33,9 @@ Load only the relevant reference:
   `bool` or return a zero value instead of an `error`.
 - Sorting functions mutate the provided slice in place, and the comparison
   callback receives indices into the current slice, not the values themselves.
-- Before implementing new behavior, check the library's current source and
-  tests: these references document API usage, not hidden implementation details.
+- Before implementing behavior, check the package README, exported source, and
+  tests in the current checkout. These references summarize API usage and may
+  lag the checked-out implementation.
 
 For a dependency in another Go module, use `go get go.osspkg.com/algorithms`.
 In this checkout, verify changes in the consuming package or test and run
