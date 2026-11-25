@@ -19,12 +19,15 @@ type node[K cmp.Ordered, V any] struct {
 }
 
 func newNode[K cmp.Ordered, V any](size int, isLeaf bool) *node[K, V] {
-	return &node[K, V]{
-		isLeaf:   isLeaf,
-		keys:     make([]K, size),
-		values:   make([]V, size),
-		children: make([]*node[K, V], size+1),
+	x := &node[K, V]{
+		isLeaf: isLeaf,
+		keys:   make([]K, size),
+		values: make([]V, size),
 	}
+	if !isLeaf {
+		x.children = make([]*node[K, V], size+1)
+	}
+	return x
 }
 
 type BTree[K cmp.Ordered, V any] struct {
@@ -80,11 +83,6 @@ func (t *BTree[K, V]) Insert(key K, val V) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if v := t.search(t.root, key); v != nil {
-		*v = val
-		return
-	}
-
 	root := t.root
 	if root.numKeys == t.maxKeys {
 		newRoot := newNode[K, V](t.maxKeys, false)
@@ -95,23 +93,6 @@ func (t *BTree[K, V]) Insert(key K, val V) {
 	} else {
 		t.insertNonFull(root, key, val)
 	}
-}
-
-func (t *BTree[K, V]) search(x *node[K, V], key K) *V {
-	for x != nil {
-		i := 0
-		for i < x.numKeys && key > x.keys[i] {
-			i++
-		}
-		if i < x.numKeys && key == x.keys[i] {
-			return &x.values[i]
-		}
-		if x.isLeaf {
-			break
-		}
-		x = x.children[i]
-	}
-	return nil
 }
 
 func (t *BTree[K, V]) splitChild(x *node[K, V], i int, y *node[K, V]) {
@@ -147,25 +128,30 @@ func (t *BTree[K, V]) splitChild(x *node[K, V], i int, y *node[K, V]) {
 }
 
 func (t *BTree[K, V]) insertNonFull(x *node[K, V], key K, val V) {
-	i := x.numKeys - 1
+	i := x.numKeys
+	for i > 0 && key < x.keys[i-1] {
+		i--
+	}
+	if i > 0 && key == x.keys[i-1] {
+		x.values[i-1] = val
+		return
+	}
 
 	if x.isLeaf {
-		for i >= 0 && key < x.keys[i] {
-			x.keys[i+1] = x.keys[i]
-			x.values[i+1] = x.values[i]
-			i--
+		for j := x.numKeys; j > i; j-- {
+			x.keys[j] = x.keys[j-1]
+			x.values[j] = x.values[j-1]
 		}
-		x.keys[i+1] = key
-		x.values[i+1] = val
+		x.keys[i] = key
+		x.values[i] = val
 		x.numKeys++
 	} else {
-		for i >= 0 && key < x.keys[i] {
-			i--
-		}
-		i++
-
 		if x.children[i].numKeys == t.maxKeys {
 			t.splitChild(x, i, x.children[i])
+			if key == x.keys[i] {
+				x.values[i] = val
+				return
+			}
 			if key > x.keys[i] {
 				i++
 			}
