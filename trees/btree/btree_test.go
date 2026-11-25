@@ -67,7 +67,7 @@ func TestUnit_BTreeDuplicate(t *testing.T) {
 	tree.Delete(5)
 
 	// После удаления одного ключа 5 должно остаться два вхождения
-	v, found = tree.Find(5)
+	_, found = tree.Find(5)
 	if found {
 		t.Fatal("key 5 should still exist after one deletion")
 	}
@@ -358,23 +358,23 @@ pkg: go.osspkg.com/algorithms/trees/btree
 cpu: 12th Gen Intel(R) Core(TM) i9-12900KF
 BenchmarkBTree_Insert
 BenchmarkBTree_Insert/Sequential
-BenchmarkBTree_Insert/Sequential-4    	     896	   1382861 ns/op	  484544 B/op	     904 allocs/op
+BenchmarkBTree_Insert/Sequential-4               1184   1088393 ns/op   373029 B/op  686 allocs/op
 BenchmarkBTree_Insert/Parallel
-BenchmarkBTree_Insert/Parallel-4      	10466346	       129.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Insert/Parallel-4              7756344     220.0 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find
 BenchmarkBTree_Find/Hit
-BenchmarkBTree_Find/Hit-4             	21723561	        54.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Hit-4                    22326198     52.01 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find/Miss
-BenchmarkBTree_Find/Miss-4            	100000000	        11.33 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Miss-4                  100000000     10.28 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find/Parallel
-BenchmarkBTree_Find/Parallel-4        	33573949	        36.75 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Parallel-4               33712418     35.67 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Delete
 BenchmarkBTree_Delete/Sequential
-BenchmarkBTree_Delete/Sequential-4    	    1158	   1100783 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Delete/Sequential-4               1351    893818 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Delete/Parallel
-BenchmarkBTree_Delete/Parallel-4      	39781627	        33.21 ns/op	      17 B/op	       0 allocs/op
+BenchmarkBTree_Delete/Parallel-4             46522065     24.40 ns/op       13 B/op    0 allocs/op
 BenchmarkBTree_MixedLoad_Parallel
-BenchmarkBTree_MixedLoad_Parallel-4   	 5782959	       236.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_MixedLoad_Parallel-4           5302496     253.2 ns/op        0 B/op    0 allocs/op
 */
 
 /*
@@ -385,23 +385,23 @@ pkg: go.osspkg.com/algorithms/trees/btree
 cpu: 12th Gen Intel(R) Core(TM) i9-12900KF
 BenchmarkBTree_Insert
 BenchmarkBTree_Insert/Sequential
-BenchmarkBTree_Insert/Sequential-4    	     392	   2917484 ns/op	 1147816 B/op	   22956 allocs/op
+BenchmarkBTree_Insert/Sequential-4                478   2189770 ns/op  1020594 B/op 19190 allocs/op
 BenchmarkBTree_Insert/Parallel
-BenchmarkBTree_Insert/Parallel-4      	 3160122	       404.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Insert/Parallel-4              3800583     647.6 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find
 BenchmarkBTree_Find/Hit
-BenchmarkBTree_Find/Hit-4             	10859036	       106.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Hit-4                    11525403     100.7 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find/Miss
-BenchmarkBTree_Find/Miss-4            	59257408	        19.98 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Miss-4                   70991496     15.96 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find/Parallel
-BenchmarkBTree_Find/Parallel-4        	27232424	        44.92 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Parallel-4               25875890     43.28 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Delete
 BenchmarkBTree_Delete/Sequential
-BenchmarkBTree_Delete/Sequential-4    	     802	   1506062 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Delete/Sequential-4                655   1842586 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Delete/Parallel
-BenchmarkBTree_Delete/Parallel-4      	15402082	        73.63 ns/op	      40 B/op	       0 allocs/op
+BenchmarkBTree_Delete/Parallel-4             17943026     64.75 ns/op       32 B/op    0 allocs/op
 BenchmarkBTree_MixedLoad_Parallel
-BenchmarkBTree_MixedLoad_Parallel-4   	 4454574	       258.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_MixedLoad_Parallel-4           5571058     557.3 ns/op       11 B/op    0 allocs/op
 */
 
 /*
@@ -412,23 +412,23 @@ pkg: go.osspkg.com/algorithms/trees/btree
 cpu: 12th Gen Intel(R) Core(TM) i9-12900KF
 BenchmarkBTree_Insert
 BenchmarkBTree_Insert/Sequential
-BenchmarkBTree_Insert/Sequential-4    	     592	   1755761 ns/op	  505440 B/op	     468 allocs/op
+BenchmarkBTree_Insert/Sequential-4               1015   1142945 ns/op   381318 B/op  361 allocs/op
 BenchmarkBTree_Insert/Parallel
-BenchmarkBTree_Insert/Parallel-4      	 4480512	       262.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Insert/Parallel-4              4092752     295.0 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find
 BenchmarkBTree_Find/Hit
-BenchmarkBTree_Find/Hit-4             	18538779	        62.38 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Hit-4                    16128752     66.88 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find/Miss
-BenchmarkBTree_Find/Miss-4            	100000000	        10.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Miss-4                  100000000     10.31 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Find/Parallel
-BenchmarkBTree_Find/Parallel-4        	29789313	        36.98 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Find/Parallel-4               35377850     33.33 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Delete
 BenchmarkBTree_Delete/Sequential
-BenchmarkBTree_Delete/Sequential-4    	     874	   1433584 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_Delete/Sequential-4               1312    955427 ns/op        0 B/op    0 allocs/op
 BenchmarkBTree_Delete/Parallel
-BenchmarkBTree_Delete/Parallel-4      	30289316	        41.55 ns/op	      19 B/op	       0 allocs/op
+BenchmarkBTree_Delete/Parallel-4             40201903     26.73 ns/op       14 B/op    0 allocs/op
 BenchmarkBTree_MixedLoad_Parallel
-BenchmarkBTree_MixedLoad_Parallel-4   	 6820371	       396.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBTree_MixedLoad_Parallel-4           7727888     362.3 ns/op        0 B/op    0 allocs/op
 */
 
 const (
